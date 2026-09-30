@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 async function api(url,opt={}){const headers={...(opt.headers||{})};if(!(opt.body instanceof FormData)&&opt.body!==undefined)headers['Content-Type']='application/json';let r=await fetch(url,{...opt,headers});return r.json()}
 async function init(){products=await api('/api/products');settings=await api('/api/settings');renderCats();render();applySettings();updateCart()}
 function applySettings(){
-  const setLink=(id,url)=>{const el=$(id);if(url)el.href=url;else el.style.display='none'};
+  const setLink=(id,url)=>{const el=$(id);if(!el)return;if(url&&String(url).trim()){el.href=String(url).trim();el.style.display='inline-block';}else{el.style.display='none'}};
   setLink('tgBtn',settings.telegram);setLink('vbBtn',settings.viber);
   document.querySelectorAll('.copy-phone').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.phone);const old=b.textContent;b.textContent='Скопировано ✓';setTimeout(()=>b.textContent=old,1200)}catch(e){prompt('Скопируйте номер:',b.dataset.phone)}});
   $('year').textContent=new Date().getFullYear();
