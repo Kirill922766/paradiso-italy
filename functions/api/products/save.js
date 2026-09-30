@@ -1,4 +1,4 @@
-import { json, requireAuth, authError } from '../../../_utils.js';
+import { json, requireAuth, authError } from '../../_utils.js';
 
 export async function onRequestPost(context) {
   if (!(await requireAuth(context))) return authError();
