@@ -41,27 +41,32 @@ export const DEFAULT_PRODUCTS = [
 export async function ensureDefaults(env) {
   const { results } = await env.DB.prepare('SELECT key, value FROM settings').all();
   const existing = Object.fromEntries(results.map(x => [x.key, x.value]));
-  const initialized = existing.__paradiso_defaults_initialized === '1';
-  if (initialized) return;
-
   const statements = [];
+
+  // Restore missing/blank shop settings without overwriting values edited by the admin.
   for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-    if (existing[key] === undefined || existing[key] === '') {
+    const current = existing[key];
+    const missing = current === undefined || current === null || String(current).trim() === '';
+    if (missing) {
       const stored = key === 'categories' ? JSON.stringify(value) : String(value);
       statements.push(env.DB.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)').bind(key, stored));
     }
   }
 
-  const productCount = await env.DB.prepare('SELECT COUNT(*) AS count FROM products').first();
-  if (Number(productCount?.count || 0) === 0) {
-    for (const p of DEFAULT_PRODUCTS) {
+  // Restore only missing seed products. Never delete or overwrite products edited in the admin.
+  const { results: productRows } = await env.DB.prepare('SELECT id, image, name, article FROM products').all();
+  const byId = new Map(productRows.map(p => [Number(p.id), p]));
+  for (const p of DEFAULT_PRODUCTS) {
+    const existingProduct = byId.get(p.id);
+    if (!existingProduct) {
       statements.push(env.DB.prepare(
         'INSERT OR REPLACE INTO products (id, article, name, category, price, sizes_json, description, image, active) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)'
       ).bind(p.id, p.article, p.name, p.category, p.price, p.sizes_json, p.description, p.image, p.active));
+    } else if (!String(existingProduct.image || '').trim()) {
+      statements.push(env.DB.prepare('UPDATE products SET image = ?1 WHERE id = ?2').bind(p.image, p.id));
     }
   }
 
-  statements.push(env.DB.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)').bind('__paradiso_defaults_initialized', '1'));
   if (statements.length) await env.DB.batch(statements);
 }
 

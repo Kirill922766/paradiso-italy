@@ -1,5 +1,6 @@
 import { onRequestGet as productsGet } from './functions/api/products.js';
 import { onRequestGet as settingsGet } from './functions/api/settings.js';
+import { onRequestGet as settingsAdminGet } from './functions/api/settings/admin.js';
 import { onRequestGet as ordersGet } from './functions/api/orders.js';
 import { onRequestGet as meGet } from './functions/api/me.js';
 import { onRequestPost as loginPost } from './functions/api/login.js';
@@ -31,6 +32,7 @@ export default {
       switch (key) {
         case 'GET /api/products': return productsGet(ctx);
         case 'GET /api/settings': return settingsGet(ctx);
+        case 'GET /api/settings/admin': return settingsAdminGet(ctx);
         case 'GET /api/orders': return ordersGet(ctx);
         case 'GET /api/me': return meGet(ctx);
         case 'POST /api/login': return loginPost(ctx);
