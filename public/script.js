@@ -4,7 +4,7 @@ async function api(url,opt={}){const headers={...(opt.headers||{})};if(!(opt.bod
 async function init(){products=await api('/api/products');settings=await api('/api/settings');renderCats();render();applySettings();updateCart();bindCheckout()}
 function normalizeUrl(url){let v=String(url||'').trim();if(v&&!/^https?:\/\//i.test(v))v='https://'+v;return v}
 function applySettings(){
-  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v)el.href=v;else el.style.display='none'};
+  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v){el.href=v;el.style.display='inline-flex';}else{el.href='#';el.style.display='inline-flex';el.onclick=e=>{e.preventDefault();}}};
   setLink('tgBtn',settings.telegram);setLink('vbBtn',settings.viber);
   document.querySelectorAll('.copy-phone').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.phone);const old=b.textContent;b.textContent='Скопировано ✓';setTimeout(()=>b.textContent=old,1200)}catch(e){prompt('Скопируйте номер:',b.dataset.phone)}});
   $('year').textContent=new Date().getFullYear();
