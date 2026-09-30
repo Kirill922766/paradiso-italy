@@ -12,6 +12,7 @@ import { onRequestPost as passwordPost } from './functions/api/password.js';
 import { onRequestPost as settingsSavePost } from './functions/api/settings/save.js';
 import { onRequestPost as orderStatusPost } from './functions/api/order-status.js';
 import { onRequestPost as paymentPost } from './functions/api/orders/payment.js';
+import { onRequestPost as telegramTestPost } from './functions/api/telegram-test.js';
 import { json } from './functions/_utils.js';
 
 function context(request, env) {
@@ -44,6 +45,7 @@ export default {
         case 'POST /api/settings/save': return settingsSavePost(ctx);
         case 'POST /api/orders/status': return orderStatusPost(ctx);
         case 'POST /api/orders/payment': return paymentPost(ctx);
+        case 'POST /api/telegram/test': return telegramTestPost(ctx);
         default: return json({ error: 'API route not found' }, 404);
       }
     } catch (error) {

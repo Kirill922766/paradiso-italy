@@ -35,4 +35,9 @@ Telegram: https://t.me/paradiso1315italy
 Viber: предоставленная invite-ссылка Viber.
 
 
-V6: favicon/logo in browser tab + social preview metadata for sharing the shop link.
+Telegram-уведомления о заказах:
+- В Cloudflare Worker добавьте Secret: TELEGRAM_BOT_TOKEN (токен бота от @BotFather).
+- В админке → Настройки укажите Telegram Chat ID и нажмите «Отправить тест в Telegram».
+- После этого каждый новый заказ отправляет уведомление в Telegram; после подтверждения оплаты также приходит отдельное сообщение.
+- Токен не хранится в GitHub и не показывается на публичном сайте.
+- Бот должен иметь доступ к указанному чату; для личных сообщений сначала откройте бота в Telegram и нажмите Start.

@@ -2,15 +2,6 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Paradiso Italy — итальянская женская одежда. Опт и розница, 7 км, Одесса.">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="favicon.svg">
-<meta name="theme-color" content="#f4dfe1">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Paradiso Italy — итальянская одежда">
-<meta property="og:description" content="Итальянская женская одежда • Опт / Розница • 7 км, Одесса">
-<meta property="og:image" content="/images/social-preview.png">
-<meta property="og:url" content="https://paradiso-italy.kipillzatorskiy.workers.dev/">
 <title>Paradiso Italy — итальянская одежда</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -67,8 +58,10 @@
   <div class="contact-card">
     <div><div class="tiny">ЖДЁМ ВАС</div><h2>Paradiso Italy</h2><p class="address">📍 7 км, Розовая 1315–1316</p><p class="soft">Опт / Розница</p></div>
     <div class="contact-people">
-      <div class="person"><b>Елена</b><span>📞 <button class="copy-phone" data-phone="+380639472122">+380639472122</button></span></div>
-      <div class="person"><b>Светлана</b><span>📞 <button class="copy-phone" data-phone="+380631030364">+380631030364</button></span></div>
+      <div class="person"><b id="contactName1">Елена</b><span>📞 <button id="contactPhone1" class="copy-phone" data-phone="+380639472122">+380639472122</button></span></div>
+      <div class="person"><b id="contactName2">Светлана</b><span>📞 <button id="contactPhone2" class="copy-phone" data-phone="+380631030364">+380631030364</button></span></div>
+      <div class="person"><b id="contactName3">Татьяна</b><span>📞 <button id="contactPhone3" class="copy-phone" data-phone="+380972577772">+380972577772</button></span></div>
+      <div class="person"><b id="contactName4">Ольга</b><span>📞 <button id="contactPhone4" class="copy-phone" data-phone="+380931980977">+380931980977</button></span></div>
       <div class="person-links"><a id="tgBtn" class="mini-contact tg" href="#" target="_blank">✈ Telegram</a><a id="vbBtn" class="mini-contact vb" href="#">💜 Viber</a></div>
     </div>
   </div>
@@ -101,9 +94,7 @@
 <div class="choice-title">Способ оплаты</div>
 <div class="payment-select">
 <select required name="payment" id="payment">
-<option value="Наличные при получении">Наличные при получении</option>
-<option value="Перевод на карту">Перевод на карту</option>
-<option value="Наложенный платёж Новой Почты">Наложенный платёж Новой Почты</option>
+<option value="Перевод на карту">💳 Полная оплата на карту</option>
 </select></div>
 <div id="cardBox" class="card-box hidden"><div id="cardInfo"></div></div>
 <label id="receiptBox" class="receipt-box hidden">Фото квитанции об оплате<input id="receipt" name="receipt" type="file" accept="image/*"></label>

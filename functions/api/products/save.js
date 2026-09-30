@@ -1,5 +1,10 @@
 import { json, requireAuth, authError } from '../../_utils.js';
 
+function normalizeSizes(value) {
+  const sizes = Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+  return sizes.length && sizes.every(s => /^\d+$/.test(s)) ? ['M','L','XL'] : sizes;
+}
+
 export async function onRequestPost(context) {
   if (!(await requireAuth(context))) return authError();
   let data;
@@ -11,7 +16,7 @@ export async function onRequestPost(context) {
       'INSERT INTO products (id, article, name, category, price, sizes_json, description, image, active) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)'
     ).bind(
       Number(p.id), String(p.article || ''), String(p.name || ''), String(p.category || 'Одежда'),
-      Number(p.price || 0), JSON.stringify(Array.isArray(p.sizes) ? p.sizes : []), String(p.description || ''),
+      Number(p.price || 0), JSON.stringify(normalizeSizes(p.sizes)), String(p.description || ''),
       String(p.image || ''), p.active === false ? 0 : 1
     ));
   }

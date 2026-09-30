@@ -4,8 +4,15 @@ async function api(url,opt={}){const headers={...(opt.headers||{})};if(!(opt.bod
 async function init(){products=await api('/api/products');settings=await api('/api/settings');renderCats();render();applySettings();updateCart();bindCheckout()}
 function normalizeUrl(url){let v=String(url||'').trim();if(v&&!/^https?:\/\//i.test(v))v='https://'+v;return v}
 function applySettings(){
-  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v){el.href=v;el.style.display='inline-flex';}else{el.href='#';el.style.display='inline-flex';el.onclick=e=>{e.preventDefault();}}};
+  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v)el.href=v;else el.style.display='none'};
   setLink('tgBtn',settings.telegram);setLink('vbBtn',settings.viber);
+  const contacts=[
+    ['contactName1','contactPhone1',settings.phoneName,settings.phone],
+    ['contactName2','contactPhone2',settings.phone2Name,settings.phone2],
+    ['contactName3','contactPhone3',settings.phone3Name,settings.phone3],
+    ['contactName4','contactPhone4',settings.phone4Name,settings.phone4]
+  ];
+  contacts.forEach(([nameId,phoneId,name,phone])=>{const n=$(nameId),b=$(phoneId);if(n)n.textContent=name||'';if(b){b.textContent=phone||'';b.dataset.phone=phone||'';}});
   document.querySelectorAll('.copy-phone').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.phone);const old=b.textContent;b.textContent='Скопировано ✓';setTimeout(()=>b.textContent=old,1200)}catch(e){prompt('Скопируйте номер:',b.dataset.phone)}});
   $('year').textContent=new Date().getFullYear();
   if($('pickupNote'))$('pickupNote').textContent=settings.pickupNote||'Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения.';

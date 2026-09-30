@@ -1,4 +1,5 @@
 let products=[],settings={};
+const DEFAULT_SIZES=['M','L','XL'];
 const $=id=>document.getElementById(id);
 
 async function api(url,opt={}){
@@ -29,7 +30,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==='categories')renderCategories();
 });
 
-async function load(){products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}
+async function load(){products=await api('/api/products');products.sort((a,b)=>Number(b.id)-Number(a.id));settings=await api('/api/settings/admin');renderProducts();renderCategories()}
 function categories(){return Array.isArray(settings.categories)?settings.categories:[]}
 function saveAllSettings(){
   return api('/api/settings/save',{method:'POST',body:JSON.stringify(settings)});
@@ -47,7 +48,7 @@ function renderProducts(){
 <select data-k="category">${cats.map(c=>`<option ${c===p.category?'selected':''}>${esc(c)}</option>`).join('')}</select>
 <input data-k="price" type="number" min="0" value="${p.price||''}" placeholder="Цена, грн">
 <input class="wide" data-k="description" value="${esc(p.description)}" placeholder="Описание">
-<input class="wide" data-k="sizes" value="${(p.sizes||[]).join(', ')}" placeholder="Размеры через запятую: 42, 44, 46">
+<input class="wide" data-k="sizes" value="${(p.sizes||[]).join(', ')}" placeholder="Размеры через запятую: M, L, XL">
 <input class="wide" data-k="image" value="${esc(p.image)}" placeholder="Путь к фото или загруженное фото">
 <label class="upload-label">📷 Загрузить новое фото<input class="photo-input" type="file" accept="image/*" onchange="uploadPhoto(${i},this)"></label>
 <label class="active-check"><input data-k="active" type="checkbox" ${p.active!==false?'checked':''}> Показывать в магазине</label>
@@ -100,7 +101,7 @@ window.deleteProduct=async i=>{
 
 $('addProduct').onclick=async()=>{
   const cat=categories()[0]||'Одежда';
-  products.push({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:['42','44','46','48'],description:'',image:'',active:true});
+  products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:[...DEFAULT_SIZES],description:'',image:'',active:true});
   await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});
   renderProducts();
 };
@@ -126,11 +127,11 @@ window.removeCategory=async i=>{
 
 let allOrders=[];
 let orderFilter='all';
-const orderStatusLabels={new:'🔴 Новый',confirmed:'🟡 Подтверждён',paid:'💳 Оплачен',shipped:'📦 Отправлен',completed:'🟢 Завершён'};
-const paymentStatusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'Оплата при получении'};
+const orderStatusLabels={new:'🔴 Новый',paid:'💳 Оплачен',completed:'🟢 Завершён'};
+const paymentStatusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'—'};
 
 function updateOrderCounters(){
-  const counts={all:allOrders.length,new:0,confirmed:0,paid:0,shipped:0,completed:0};
+  const counts={all:allOrders.length,new:0,paid:0,completed:0};
   allOrders.forEach(o=>{const st=orderStatusLabels[o.orderStatus]?o.orderStatus:'new';counts[st]++});
   Object.entries(counts).forEach(([k,v])=>{const el=$('count'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent=v});
   const badge=$('newOrderBadge');
@@ -155,7 +156,7 @@ function renderOrders(){
       ${o.receipt?`<div class="receipt-box"><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a>${paymentButtons}</div>`:''}
       <div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size||'—')} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div>
       <div class="order-total"><b>Сумма:</b> ${itemTotal?itemTotal.toLocaleString('uk-UA')+' грн':'Цена уточняется'}</div>
-      <div class="order-management"><label>Статус ${orderStatusSelect(o)}</label><label>ТТН <input class="ttn-input" value="${esc(o.ttn||'')}" placeholder="Введите номер ТТН" onkeydown="if(event.key==='Enter')saveTtn('${o.id}',this.value)"></label><button onclick="saveTtn('${o.id}',this.previousElementSibling?.querySelector('input')?.value || '')">💾 Сохранить ТТН</button></div>
+      <div class="order-management"><label>Статус ${orderStatusSelect(o)}</label></div>
       <p class="order-comment">Комментарий: ${esc(o.comment||'—')}</p>
       <button class="danger" onclick="delOrder('${o.id}')">Удалить заказ</button>
     </div>`;
@@ -164,7 +165,6 @@ function renderOrders(){
 
 async function loadOrders(){try{allOrders=await api('/api/orders');renderOrders()}catch(e){alert(e.message)}}
 window.setOrderStatus=async(id,status)=>{try{await api('/api/orders/status',{method:'POST',body:JSON.stringify({id,status})});await loadOrders()}catch(e){alert(e.message)}};
-window.saveTtn=async(id,ttn)=>{try{const current=allOrders.find(o=>o.id===id);await api('/api/orders/status',{method:'POST',body:JSON.stringify({id,status:current?.orderStatus||'new',ttn})});await loadOrders()}catch(e){alert(e.message)}};
 window.copyPhone=async phone=>{try{await navigator.clipboard.writeText(phone);alert('Телефон скопирован ♡')}catch{alert('Телефон: '+phone)}};
 window.setPayment=async(id,status)=>{try{await api('/api/orders/payment',{method:'POST',body:JSON.stringify({id,status})});await loadOrders()}catch(e){alert(e.message)}};
 window.delOrder=async id=>{if(confirm('Удалить заказ?')){await api('/api/orders/delete',{method:'POST',body:JSON.stringify({id})});await loadOrders()}};
@@ -177,9 +177,14 @@ function renderSettings(){
 <label>Телефон Елены<input name="phone" value="${esc(settings.phone)}"></label>
 <label>Имя Елены<input name="phoneName" value="${esc(settings.phoneName)}"></label>
 <label class="wide">Ссылка на Telegram<input name="telegram" value="${esc(settings.telegram)}" placeholder="https://t.me/..."></label>
+<label class="wide">Telegram Chat ID для уведомлений<input name="telegramChatId" value="${esc(settings.telegramChatId||'')}" placeholder="Например, -1001234567890 или ваш chat id"></label><button type="button" id="telegramTest" class="settings-test">📲 Отправить тест в Telegram</button>
 <label class="wide">Ссылка на Viber<input name="viber" value="${esc(settings.viber)}" placeholder="https://invite.viber.com/..."></label>
 <label>Телефон Светланы<input name="phone2" value="${esc(settings.phone2)}"></label>
 <label>Имя Светланы<input name="phone2Name" value="${esc(settings.phone2Name)}"></label>
+<label>Телефон Татьяны<input name="phone3" value="${esc(settings.phone3||'+380972577772')}"></label>
+<label>Имя Татьяны<input name="phone3Name" value="${esc(settings.phone3Name||'Татьяна')}"></label>
+<label>Телефон Ольги<input name="phone4" value="${esc(settings.phone4||'+380931980977')}"></label>
+<label>Имя Ольги<input name="phone4Name" value="${esc(settings.phone4Name||'Ольга')}"></label>
 <label class="wide">Адрес<input name="address" value="${esc(settings.address)}"></label>
 <label class="wide">Доставка<textarea name="deliveryNote">${esc(settings.deliveryNote)}</textarea></label>
 <label class="wide">Самовывоз<textarea name="pickupNote">${esc(settings.pickupNote)}</textarea></label>
@@ -187,7 +192,8 @@ function renderSettings(){
 <label>Номер карты<input name="cardNumber" value="${esc(settings.cardNumber)}" placeholder="0000 0000 0000 0000"></label>
 <label>Получатель карты<input name="cardName" value="${esc(settings.cardName)}" placeholder="Имя и фамилия"></label>
 <label class="wide">API-ключ Новой Пошты<input name="novaposhtaApiKey" value="${esc(settings.novaposhtaApiKey)}" placeholder="Вставьте ключ из бизнес-кабинета Новой Пошты"></label>
-<button type="submit">Сохранить настройки</button>`
+<button type="submit">Сохранить настройки</button>`;
+  $('telegramTest').onclick=async()=>{try{const f=new FormData($('settingsForm'));settings={...settings,...Object.fromEntries(f.entries()),categories:categories()};await saveAllSettings();await api('/api/telegram/test',{method:'POST',body:'{}'});alert('Тест отправлен в Telegram ♡')}catch(e){alert(e.message)}};
 }
 $('settingsForm').onsubmit=async e=>{
   e.preventDefault();
