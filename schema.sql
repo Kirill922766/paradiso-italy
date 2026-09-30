@@ -1,0 +1,50 @@
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY,
+  article TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'Одежда',
+  price REAL NOT NULL DEFAULT 0,
+  sizes_json TEXT NOT NULL DEFAULT '[]',
+  description TEXT NOT NULL DEFAULT '',
+  image TEXT NOT NULL DEFAULT '',
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL,
+  date TEXT NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  delivery TEXT NOT NULL,
+  city TEXT NOT NULL DEFAULT '',
+  branch TEXT NOT NULL DEFAULT '',
+  payment TEXT NOT NULL,
+  comment TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  order_id TEXT NOT NULL,
+  product_id INTEGER NOT NULL,
+  article TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL,
+  size TEXT NOT NULL DEFAULT '',
+  price REAL NOT NULL DEFAULT 0,
+  qty INTEGER NOT NULL DEFAULT 1,
+  image TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS admin (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  password_hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  sid TEXT PRIMARY KEY,
+  expires_at INTEGER NOT NULL
+);

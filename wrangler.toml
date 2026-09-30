@@ -1,0 +1,13 @@
+name = "paradiso-italy"
+compatibility_date = "2026-09-30"
+
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "paradiso-italy-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "paradiso-italy-images"
