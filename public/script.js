@@ -4,8 +4,9 @@ async function api(url,opt={}){const headers={...(opt.headers||{})};if(!(opt.bod
 async function init(){products=await api('/api/products');settings=await api('/api/settings');renderCats();render();applySettings();updateCart();bindCheckout()}
 function normalizeUrl(url){let v=String(url||'').trim();if(v&&!/^https?:\/\//i.test(v))v='https://'+v;return v}
 function applySettings(){
-  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v)el.href=v;else el.style.display='none'};
-  setLink('tgBtn',settings.telegram);setLink('vbBtn',settings.viber);
+  const setLink=(id,url)=>{const el=$(id);if(!el)return;const v=normalizeUrl(url);if(v){el.href=v;el.style.display='inline-block';el.target='_blank';el.rel='noopener noreferrer'}else el.style.display='none'};
+  setLink('tgBtn',settings.telegram || 'https://t.me/paradiso1315italy');
+  setLink('vbBtn',settings.viber || 'https://invite.viber.com/?g2=AQAaFlZKJwain0jOo%2B6nfN8kelZZqSA0ycoe%2BQpfwQRMB5tmuHSVQerrd1BGEIQ4&lang=uk');
   document.querySelectorAll('.copy-phone').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.phone);const old=b.textContent;b.textContent='Скопировано ✓';setTimeout(()=>b.textContent=old,1200)}catch(e){prompt('Скопируйте номер:',b.dataset.phone)}});
   $('year').textContent=new Date().getFullYear();
   if($('pickupNote'))$('pickupNote').textContent=settings.pickupNote||'Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения.';

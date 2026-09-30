@@ -29,6 +29,8 @@ export async function onRequestGet(context) {
       settings[x.key] = x.value;
     }
   }
+  if (!String(settings.telegram || '').trim()) settings.telegram = DEFAULTS.telegram;
+  if (!String(settings.viber || '').trim()) settings.viber = DEFAULTS.viber;
   for (const key of ['telegram','viber']) {
     const value = String(settings[key] || '').trim();
     if (value && !/^https?:\/\//i.test(value)) settings[key] = 'https://' + value;

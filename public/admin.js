@@ -29,7 +29,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==='categories')renderCategories();
 });
 
-async function load(){products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}
+async function load(){try{products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}catch(e){console.error(e);const el=$('productList');if(el)el.innerHTML='<p class="soft">Не удалось загрузить товары. Обновите страницу. Если проблема повторится — проверьте деплой Cloudflare.</p>';}}
 function categories(){return Array.isArray(settings.categories)?settings.categories:[]}
 function saveAllSettings(){
   return api('/api/settings/save',{method:'POST',body:JSON.stringify(settings)});
