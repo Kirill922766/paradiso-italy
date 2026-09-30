@@ -33,3 +33,6 @@ https://paradiso-italy.kipillzatorskiy.workers.dev/admin.html
 Текущие социальные ссылки:
 Telegram: https://t.me/paradiso1315italy
 Viber: предоставленная invite-ссылка Viber.
+
+
+V6: favicon/logo in browser tab + social preview metadata for sharing the shop link.
