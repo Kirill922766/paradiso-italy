@@ -1,13 +1,13 @@
 name = "paradiso-italy"
+main = "worker.js"
 compatibility_date = "2026-09-30"
 
-pages_build_output_dir = "."
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "paradiso-italy-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
-
-[[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "paradiso-italy-images"
+database_id = "2d231323-e95e-4189-8b0a-816168919e57"
