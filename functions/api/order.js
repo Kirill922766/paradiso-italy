@@ -1,17 +1,35 @@
 import { json } from '../_utils.js';
 
+const nameRe = /^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ'’\-]{2,}(?:\s+[A-Za-zА-Яа-яЁёІіЇїЄєҐґ'’\-]{2,})+$/;
+const phoneRe = /^\+380\d{9}$/;
+const META = '__PARADISO_META__';
+
 export async function onRequestPost(context) {
   let data;
   try { data = await context.request.json(); } catch { return json({ error: 'Неверные данные' }, 400); }
-  if (!data?.name || !data?.phone || !data?.delivery || !data?.payment || !Array.isArray(data?.items) || !data.items.length) {
-    return json({ error: 'Заполните обязательные поля' }, 400);
-  }
+  const name = String(data?.name || '').trim().replace(/\s+/g,' ');
+  const phone = String(data?.phone || '').trim().replace(/[\s()\-]/g,'');
+  const delivery = String(data?.delivery || '');
+  const payment = String(data?.payment || '');
+  if (!name || !nameRe.test(name)) return json({ error: 'Введите имя и фамилию получателя' }, 400);
+  if (!phoneRe.test(phone)) return json({ error: 'Введите номер в формате +380XXXXXXXXX' }, 400);
+  if (!delivery || !payment || !Array.isArray(data?.items) || !data.items.length) return json({ error: 'Заполните обязательные поля' }, 400);
+  if (delivery === 'Новая Почта' && (!String(data.city||'').trim() || !String(data.branch||'').trim())) return json({ error: 'Выберите город и отделение Новой Почты' }, 400);
+  if (payment === 'Перевод на карту' && !String(data.receipt || '').startsWith('data:image/')) return json({ error: 'Для оплаты на карту загрузите фото квитанции' }, 400);
+  if (String(data.receipt||'').length > 500000) return json({ error: 'Квитанция слишком большая' }, 400);
+
   const id = crypto.randomUUID().replaceAll('-', '').slice(0, 10);
   const now = new Date();
   const date = now.toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' });
+  const meta = {
+    text: String(data.comment || ''),
+    paymentStatus: payment === 'Перевод на карту' ? 'receipt_uploaded' : 'not_required',
+    receipt: String(data.receipt || '')
+  };
+  const comment = META + JSON.stringify(meta);
   await context.env.DB.prepare(
     'INSERT INTO orders (id, created_at, date, name, phone, delivery, city, branch, payment, comment) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)'
-  ).bind(id, Date.now(), date, String(data.name), String(data.phone), String(data.delivery), String(data.city || ''), String(data.branch || ''), String(data.payment), String(data.comment || '')).run();
+  ).bind(id, Date.now(), date, name, phone, delivery, String(data.city || ''), String(data.branch || ''), payment, comment).run();
 
   const statements = data.items.map(x => context.env.DB.prepare(
     'INSERT INTO order_items (order_id, product_id, article, name, size, price, qty, image) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)'

@@ -13,3 +13,5 @@
 .active-check{display:flex!important;align-items:center;gap:7px;padding:9px 0;color:#6e5b60!important}
 .active-check input{width:auto!important}
 @media(max-width:700px){.category-add{display:block}.category-add input{margin-bottom:8px}.category-add .primary{width:100%}}
+
+.order-payment-status{display:inline-block;padding:5px 9px;border-radius:999px;background:#fff5d8}.receipt-preview{max-width:260px;max-height:320px;border-radius:10px;border:1px solid #eadfe0;margin-top:8px}.payment-actions{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.payment-actions button{cursor:pointer}

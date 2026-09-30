@@ -29,7 +29,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==='categories')renderCategories();
 });
 
-async function load(){products=await api('/api/products');settings=await api('/api/settings');renderProducts();renderCategories()}
+async function load(){products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}
 function categories(){return Array.isArray(settings.categories)?settings.categories:[]}
 function saveAllSettings(){
   return api('/api/settings/save',{method:'POST',body:JSON.stringify(settings)});
@@ -126,8 +126,10 @@ window.removeCategory=async i=>{
 
 async function loadOrders(){
   let os=await api('/api/orders');
-  $('orders').innerHTML=os.reverse().map(o=>`<div class="order"><div class="order-top"><b>Заказ #${o.id}</b><small>${esc(o.date)}</small></div><p><b>${esc(o.name)}</b> • <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></p><p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}<br>💳 <b>${esc(o.payment)}</b></p><div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size)} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div><small>Комментарий: ${esc(o.comment||'—')}</small><br><button class="danger" onclick="delOrder('${o.id}')">Удалить</button></div>`).join('')||'<p>Заказов пока нет.</p>'
+  const statusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'Оплата при получении'};
+  $('orders').innerHTML=os.map(o=>`<div class="order"><div class="order-top"><b>Заказ #${o.id}</b><small>${esc(o.date)}</small></div><p><b>${esc(o.name)}</b> • <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></p><p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}<br>💳 <b>${esc(o.payment)}</b> <span class="order-payment-status">${esc(statusLabel[o.paymentStatus]||o.paymentStatus||'—')}</span></p>${o.receipt?`<div><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a></div><div class="payment-actions">${o.paymentStatus==='receipt_uploaded'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button><button class="danger" onclick="setPayment('${o.id}','rejected')">Отклонить</button>`:''}${o.paymentStatus==='rejected'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button>`:''}</div>`:''}<div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size)} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div><small>Комментарий: ${esc(o.comment||'—')}</small><br><button class="danger" onclick="delOrder('${o.id}')">Удалить</button></div>`).join('')||'<p>Заказов пока нет.</p>'
 }
+window.setPayment=async(id,status)=>{try{await api('/api/orders/payment',{method:'POST',body:JSON.stringify({id,status})});loadOrders()}catch(e){alert(e.message)}}
 window.delOrder=async id=>{if(confirm('Удалить заказ?')){await api('/api/orders/delete',{method:'POST',body:JSON.stringify({id})});loadOrders()}};
 $('refreshOrders').onclick=loadOrders;
 
@@ -143,6 +145,10 @@ function renderSettings(){
 <label class="wide">Адрес<input name="address" value="${esc(settings.address)}"></label>
 <label class="wide">Доставка<textarea name="deliveryNote">${esc(settings.deliveryNote)}</textarea></label>
 <label class="wide">Самовывоз<textarea name="pickupNote">${esc(settings.pickupNote)}</textarea></label>
+<label>Банк для оплаты<input name="cardBank" value="${esc(settings.cardBank)}" placeholder="Например, Monobank"></label>
+<label>Номер карты<input name="cardNumber" value="${esc(settings.cardNumber)}" placeholder="0000 0000 0000 0000"></label>
+<label>Получатель карты<input name="cardName" value="${esc(settings.cardName)}" placeholder="Имя и фамилия"></label>
+<label class="wide">API-ключ Новой Пошты<input name="novaposhtaApiKey" value="${esc(settings.novaposhtaApiKey)}" placeholder="Вставьте ключ из бизнес-кабинета Новой Пошты"></label>
 <button type="submit">Сохранить настройки</button>`
 }
 $('settingsForm').onsubmit=async e=>{

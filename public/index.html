@@ -60,7 +60,7 @@
     <div class="contact-people">
       <div class="person"><b>Елена</b><span>📞 <button class="copy-phone" data-phone="+380639472122">+380639472122</button></span></div>
       <div class="person"><b>Светлана</b><span>📞 <button class="copy-phone" data-phone="+380631030364">+380631030364</button></span></div>
-      <div class="person-links"><a id="tgBtn" class="mini-contact tg" href="#" target="_blank">✈ Telegram</a><a id="vbBtn" class="mini-contact vb" href="#" target="_blank" rel="noopener noreferrer">💜 Viber</a></div>
+      <div class="person-links"><a id="tgBtn" class="mini-contact tg" href="#" target="_blank">✈ Telegram</a><a id="vbBtn" class="mini-contact vb" href="#">💜 Viber</a></div>
     </div>
   </div>
 </div></section>
@@ -79,13 +79,15 @@
 
 <div id="checkoutModal" class="modal hidden"><div class="shade"></div><div class="modal-box checkout-modal"><button class="x" data-close>×</button><div class="tiny">ОФОРМЛЕНИЕ</div><h3>Куда отправить заказ?</h3>
 <form id="checkoutForm">
-<input required name="name" placeholder="Ваше имя">
-<input required name="phone" placeholder="Телефон">
+<input required name="name" placeholder="Имя и фамилия получателя" autocomplete="name" pattern=".*\s+.*" title="Введите имя и фамилию">
+<input required name="phone" placeholder="+380XXXXXXXXX" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" title="Введите номер в формате +380XXXXXXXXX">
 <div class="choice-title">Как получить заказ?</div>
 <div class="choice"><label><input type="radio" name="delivery" value="Самовывоз" checked> 🏠 Самовывоз</label><label><input type="radio" name="delivery" value="Новая Почта"> 📦 Новая Почта</label></div>
+<div id="pickupNote" class="success">Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения менеджером.</div>
 <div id="npFields" class="np-fields hidden">
-  <input name="city" id="city" placeholder="Город">
-  <input name="branch" id="branch" placeholder="Отделение / адрес Новой Почты">
+  <div><input name="city" id="city" list="cityList" placeholder="Начните вводить город"><datalist id="cityList"></datalist></div>
+  <div><input name="branch" id="branch" list="branchList" placeholder="Выберите отделение"><datalist id="branchList"></datalist></div>
+  <div id="npHint" class="soft np-hint">Начните вводить город — список подгрузится.</div>
 </div>
 <div class="choice-title">Способ оплаты</div>
 <div class="payment-select">
@@ -94,6 +96,9 @@
 <option value="Перевод на карту">Перевод на карту</option>
 <option value="Наложенный платёж Новой Почты">Наложенный платёж Новой Почты</option>
 </select></div>
+<div id="cardBox" class="card-box hidden"><div id="cardInfo"></div></div>
+<label id="receiptBox" class="receipt-box hidden">Фото квитанции об оплате<input id="receipt" name="receipt" type="file" accept="image/*"></label>
+<div id="orderStatus" class="error hidden"></div>
 <textarea name="comment" placeholder="Комментарий к заказу"></textarea>
 <button class="btn dark full" type="submit">Оформить заказ 🛍</button>
 </form></div></div>

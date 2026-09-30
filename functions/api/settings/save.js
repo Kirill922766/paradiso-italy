@@ -6,6 +6,10 @@ export async function onRequestPost(context) {
   try { data = await context.request.json(); } catch { return json({ error: 'Неверные данные' }, 400); }
 
   const clean = { ...data };
+  for (const key of ['telegram','viber']) {
+    const value = String(clean[key] || '').trim();
+    if (value && !/^https?:\/\//i.test(value)) clean[key] = 'https://' + value;
+  }
   if (Array.isArray(clean.categories)) clean.categories = JSON.stringify(clean.categories);
   const statements = [context.env.DB.prepare('DELETE FROM settings')];
   for (const [key, value] of Object.entries(clean || {})) {
