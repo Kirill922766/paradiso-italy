@@ -1,7 +1,7 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paradiso — Админка</title><link rel="stylesheet" href="admin.css"></head><body>
 <div id="login" class="login"><div class="login-card"><div class="admin-logo">✦ PARADISO ✦<small>Made & ITALY</small></div><h1>Админ-панель</h1><p>Управление магазином</p><input id="pass" type="password" placeholder="Пароль"><button id="loginBtn">Войти</button><div id="loginErr"></div><a href="/">← Вернуться в магазин</a></div></div>
 <div id="app" class="hidden"><header><div><b>PARADISO</b><span>Админ-панель</span></div><div><a href="/" target="_blank">Открыть магазин</a><button id="logout">Выйти</button></div></header>
-<main><div class="tabs"><button class="tab active" data-tab="products">👗 Товары</button><button class="tab" data-tab="categories">🏷️ Категории</button><button class="tab" data-tab="orders">📦 Заказы</button><button class="tab" data-tab="settings">⚙️ Настройки</button></div>
+<main><div class="tabs"><button class="tab active" data-tab="products">👗 Товары</button><button class="tab" data-tab="categories">🏷️ Категории</button><button class="tab" data-tab="orders">📦 Заказы <span id="newOrderBadge" class="order-badge hidden">0</span></button><button class="tab" data-tab="settings">⚙️ Настройки</button></div>
 <section id="productsTab"><div class="head"><div><h2>Товары</h2><p>Добавляйте, изменяйте фото, цены, размеры и описание.</p></div><button id="addProduct" class="primary">＋ Новый товар</button></div><div id="productList"></div></section>
 <section id="categoriesTab" class="hidden">
 <div class="head"><div><h2>Категории</h2><p>Добавляйте любые разделы каталога без изменения кода.</p></div></div>
@@ -10,7 +10,7 @@
   <div id="categoryList"></div>
 </div>
 </section>
-<section id="ordersTab" class="hidden"><div class="head"><div><h2>Заказы</h2><p>Здесь будут заявки покупателей.</p></div><button id="refreshOrders">Обновить</button></div><div id="orders"></div></section>
+<section id="ordersTab" class="hidden"><div class="head"><div><h2>Заказы</h2><p>Управляйте заказами по статусам: новый → подтверждён → оплачен → отправлен → завершён.</p></div><button id="refreshOrders">Обновить</button></div><div id="orderFilters" class="order-filters"><button class="order-filter active" data-filter="all">Все <span id="countAll">0</span></button><button class="order-filter" data-filter="new">🔴 Новые <span id="countNew">0</span></button><button class="order-filter" data-filter="confirmed">🟡 Подтверждённые <span id="countConfirmed">0</span></button><button class="order-filter" data-filter="paid">💳 Оплаченные <span id="countPaid">0</span></button><button class="order-filter" data-filter="shipped">📦 Отправленные <span id="countShipped">0</span></button><button class="order-filter" data-filter="completed">🟢 Завершённые <span id="countCompleted">0</span></button></div><div id="orders"></div></section>
 <section id="settingsTab" class="hidden"><div class="head"><div><h2>Настройки магазина</h2><p>Эти данные отображаются на сайте.</p></div></div><form id="settingsForm" class="settings"></form><hr><h3>Смена пароля</h3><div class="row"><input id="newPass" type="password" placeholder="Новый пароль"><button id="changePass">Сохранить пароль</button></div></section>
 </main></div>
 <script src="admin.js"></script></body></html>

@@ -5,12 +5,16 @@ export async function onRequestGet(context) {
   const { results } = await context.env.DB.prepare('SELECT * FROM orders ORDER BY created_at DESC').all();
   const orders = [];
   for (const o of results) {
-    let comment=o.comment||'', paymentStatus='not_required', receipt='';
+    let comment=o.comment||'', paymentStatus='not_required', receipt='', orderStatus='new', ttn='';
     if (comment.startsWith(META)) {
-      try { const m=JSON.parse(comment.slice(META.length)); comment=String(m.text||''); paymentStatus=String(m.paymentStatus||'not_required'); receipt=String(m.receipt||''); } catch {}
+      try {
+        const m=JSON.parse(comment.slice(META.length));
+        comment=String(m.text||''); paymentStatus=String(m.paymentStatus||'not_required'); receipt=String(m.receipt||'');
+        orderStatus=String(m.orderStatus||'new'); ttn=String(m.ttn||'');
+      } catch {}
     }
     const items = await context.env.DB.prepare('SELECT product_id as id, article, name, size, price, qty, image FROM order_items WHERE order_id = ?1 ORDER BY rowid').bind(o.id).all();
-    orders.push({ ...o, comment, paymentStatus, receipt, items: items.results || [] });
+    orders.push({ ...o, comment, paymentStatus, receipt, orderStatus, ttn, items: items.results || [] });
   }
   return json(orders);
 }

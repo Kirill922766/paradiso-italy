@@ -24,7 +24,9 @@ export async function onRequestPost(context) {
   const meta = {
     text: String(data.comment || ''),
     paymentStatus: payment === 'Перевод на карту' ? 'receipt_uploaded' : 'not_required',
-    receipt: String(data.receipt || '')
+    receipt: String(data.receipt || ''),
+    orderStatus: 'new',
+    ttn: ''
   };
   const comment = META + JSON.stringify(meta);
   await context.env.DB.prepare(

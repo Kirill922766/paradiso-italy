@@ -29,7 +29,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==='categories')renderCategories();
 });
 
-async function load(){try{products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}catch(e){console.error(e);const el=$('productList');if(el)el.innerHTML='<p class="soft">Не удалось загрузить товары. Обновите страницу. Если проблема повторится — проверьте деплой Cloudflare.</p>';}}
+async function load(){products=await api('/api/products');settings=await api('/api/settings/admin');renderProducts();renderCategories()}
 function categories(){return Array.isArray(settings.categories)?settings.categories:[]}
 function saveAllSettings(){
   return api('/api/settings/save',{method:'POST',body:JSON.stringify(settings)});
@@ -124,14 +124,52 @@ window.removeCategory=async i=>{
   await saveAllSettings();renderCategories();renderProducts();
 };
 
-async function loadOrders(){
-  let os=await api('/api/orders');
-  const statusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'Оплата при получении'};
-  $('orders').innerHTML=os.map(o=>`<div class="order"><div class="order-top"><b>Заказ #${o.id}</b><small>${esc(o.date)}</small></div><p><b>${esc(o.name)}</b> • <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></p><p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}<br>💳 <b>${esc(o.payment)}</b> <span class="order-payment-status">${esc(statusLabel[o.paymentStatus]||o.paymentStatus||'—')}</span></p>${o.receipt?`<div><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a></div><div class="payment-actions">${o.paymentStatus==='receipt_uploaded'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button><button class="danger" onclick="setPayment('${o.id}','rejected')">Отклонить</button>`:''}${o.paymentStatus==='rejected'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button>`:''}</div>`:''}<div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size)} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div><small>Комментарий: ${esc(o.comment||'—')}</small><br><button class="danger" onclick="delOrder('${o.id}')">Удалить</button></div>`).join('')||'<p>Заказов пока нет.</p>'
+let allOrders=[];
+let orderFilter='all';
+const orderStatusLabels={new:'🔴 Новый',confirmed:'🟡 Подтверждён',paid:'💳 Оплачен',shipped:'📦 Отправлен',completed:'🟢 Завершён'};
+const paymentStatusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'Оплата при получении'};
+
+function updateOrderCounters(){
+  const counts={all:allOrders.length,new:0,confirmed:0,paid:0,shipped:0,completed:0};
+  allOrders.forEach(o=>{const st=orderStatusLabels[o.orderStatus]?o.orderStatus:'new';counts[st]++});
+  Object.entries(counts).forEach(([k,v])=>{const el=$('count'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent=v});
+  const badge=$('newOrderBadge');
+  if(badge){badge.textContent=counts.new;badge.classList.toggle('hidden',counts.new===0)}
 }
-window.setPayment=async(id,status)=>{try{await api('/api/orders/payment',{method:'POST',body:JSON.stringify({id,status})});loadOrders()}catch(e){alert(e.message)}}
-window.delOrder=async id=>{if(confirm('Удалить заказ?')){await api('/api/orders/delete',{method:'POST',body:JSON.stringify({id})});loadOrders()}};
+
+function orderStatusSelect(o){
+  return `<select class="order-status-select" onchange="setOrderStatus('${o.id}',this.value)">${Object.entries(orderStatusLabels).map(([k,v])=>`<option value="${k}" ${o.orderStatus===k?'selected':''}>${v}</option>`).join('')}</select>`;
+}
+
+function renderOrders(){
+  updateOrderCounters();
+  const list=orderFilter==='all'?allOrders:allOrders.filter(o=>(o.orderStatus||'new')===orderFilter);
+  $('orders').innerHTML=list.map(o=>{
+    const itemTotal=(o.items||[]).reduce((sum,x)=>sum+(Number(x.price)||0)*(Number(x.qty)||1),0);
+    const paymentButtons=o.receipt?`<div class="payment-actions">${o.paymentStatus==='receipt_uploaded'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button><button class="danger" onclick="setPayment('${o.id}','rejected')">Отклонить</button>`:''}${o.paymentStatus==='rejected'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button>`:''}</div>`:'';
+    return `<div class="order order-status-${esc(o.orderStatus||'new')}">
+      <div class="order-top"><div><b>Заказ #${esc(o.id)}</b> <span class="order-status-pill">${orderStatusLabels[o.orderStatus]||orderStatusLabels.new}</span></div><small>${esc(o.date)}</small></div>
+      <div class="order-main-actions"><div><p><b>👤 ${esc(o.name)}</b></p><p>📱 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></p></div><div class="quick-actions"><a class="button-link" href="tel:${esc(o.phone)}">📞 Позвонить</a><button onclick="copyPhone('${esc(o.phone)}')">📋 Скопировать телефон</button></div></div>
+      <p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}</p>
+      <p>💳 <b>${esc(o.payment)}</b> <span class="order-payment-status">${esc(paymentStatusLabel[o.paymentStatus]||o.paymentStatus||'—')}</span></p>
+      ${o.receipt?`<div class="receipt-box"><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a>${paymentButtons}</div>`:''}
+      <div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size||'—')} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div>
+      <div class="order-total"><b>Сумма:</b> ${itemTotal?itemTotal.toLocaleString('uk-UA')+' грн':'Цена уточняется'}</div>
+      <div class="order-management"><label>Статус ${orderStatusSelect(o)}</label><label>ТТН <input class="ttn-input" value="${esc(o.ttn||'')}" placeholder="Введите номер ТТН" onkeydown="if(event.key==='Enter')saveTtn('${o.id}',this.value)"></label><button onclick="saveTtn('${o.id}',this.previousElementSibling?.querySelector('input')?.value || '')">💾 Сохранить ТТН</button></div>
+      <p class="order-comment">Комментарий: ${esc(o.comment||'—')}</p>
+      <button class="danger" onclick="delOrder('${o.id}')">Удалить заказ</button>
+    </div>`;
+  }).join('')||'<p class="soft">В этом разделе заказов пока нет.</p>';
+}
+
+async function loadOrders(){try{allOrders=await api('/api/orders');renderOrders()}catch(e){alert(e.message)}}
+window.setOrderStatus=async(id,status)=>{try{await api('/api/orders/status',{method:'POST',body:JSON.stringify({id,status})});await loadOrders()}catch(e){alert(e.message)}};
+window.saveTtn=async(id,ttn)=>{try{const current=allOrders.find(o=>o.id===id);await api('/api/orders/status',{method:'POST',body:JSON.stringify({id,status:current?.orderStatus||'new',ttn})});await loadOrders()}catch(e){alert(e.message)}};
+window.copyPhone=async phone=>{try{await navigator.clipboard.writeText(phone);alert('Телефон скопирован ♡')}catch{alert('Телефон: '+phone)}};
+window.setPayment=async(id,status)=>{try{await api('/api/orders/payment',{method:'POST',body:JSON.stringify({id,status})});await loadOrders()}catch(e){alert(e.message)}};
+window.delOrder=async id=>{if(confirm('Удалить заказ?')){await api('/api/orders/delete',{method:'POST',body:JSON.stringify({id})});await loadOrders()}};
 $('refreshOrders').onclick=loadOrders;
+document.querySelectorAll('.order-filter').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.order-filter').forEach(x=>x.classList.remove('active'));btn.classList.add('active');orderFilter=btn.dataset.filter;renderOrders()});
 
 function renderSettings(){
   $('settingsForm').innerHTML=`<label>Название<input name="shopName" value="${esc(settings.shopName)}"></label>
