@@ -37,74 +37,58 @@ function saveAllSettings(){
 }
 
 function renderProducts(){
-  let cats=categories();
-  if(!cats.length)cats=['Одежда'];
+  let cats=categories(); if(!cats.length)cats=['Одежда'];
   let el=$('productList');
-  el.innerHTML=products.map((p,i)=>`<div class="product-edit">
-<img src="${esc(p.image)}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22190%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23eee%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22>Фото</text></svg>'">
-<div><div class="fields">
-<input class="wide" data-k="name" value="${esc(p.name)}" placeholder="Название">
-<input data-k="article" value="${esc(p.article)}" placeholder="Артикул">
-<select data-k="category">${cats.map(c=>`<option ${c===p.category?'selected':''}>${esc(c)}</option>`).join('')}</select>
-<input data-k="price" type="number" min="0" value="${p.price||''}" placeholder="Цена, грн">
-<input class="wide" data-k="description" value="${esc(p.description)}" placeholder="Описание">
-<input class="wide" data-k="sizes" value="${(p.sizes||[]).join(', ')}" placeholder="Размеры через запятую: M, L, XL">
-<input class="wide" data-k="image" value="${esc(p.image)}" placeholder="Путь к фото или загруженное фото">
-<label class="upload-label">📷 Загрузить новое фото<input class="photo-input" type="file" accept="image/*" onchange="uploadPhoto(${i},this)"></label>
-<label class="active-check"><input data-k="active" type="checkbox" ${p.active!==false?'checked':''}> Показывать в магазине</label>
-</div><div class="actions"><button class="save" onclick="saveProduct(${i})">Сохранить</button><button class="danger" onclick="deleteProduct(${i})">Удалить</button></div></div></div>`).join('')||'<p>Товаров пока нет.</p>';
+  el.innerHTML=products.map((p,i)=>{
+    const sizes=(p.sizes||[]).length?(p.sizes||[]):DEFAULT_SIZES;
+    const stock=p.sizeStock||Object.fromEntries(sizes.map(x=>[x,true]));
+    const colors=Array.isArray(p.colors)?p.colors:[];
+    const imgs=Array.isArray(p.images)&&p.images.length?p.images:(p.image?[p.image]:[]);
+    return `<div class="product-edit">
+      <div class="admin-gallery">${imgs.map((im,j)=>`<div class="admin-photo ${j===0?'main':''}"><img src="${esc(im)}"><button type="button" class="photo-del" onclick="removeImage(${i},${j})">×</button>${j===0?'<span>Главное</span>':`<button type="button" class="photo-main" onclick="makeMainImage(${i},${j})">Сделать главным</button>`}</div>`).join('')||'<div class="photo-empty">Фото нет</div>'}</div>
+      <div><div class="fields">
+        <input class="wide" data-k="name" value="${esc(p.name)}" placeholder="Название">
+        <input data-k="article" value="${esc(p.article)}" placeholder="Артикул">
+        <select data-k="category">${cats.map(c=>`<option ${c===p.category?'selected':''}>${esc(c)}</option>`).join('')}</select>
+        <input data-k="price" type="number" min="0" value="${p.price||''}" placeholder="Цена, грн">
+        <textarea class="wide" data-k="description" placeholder="Описание">${esc(p.description)}</textarea>
+        <div class="stock-box wide"><b>📏 Размеры и наличие</b><div class="stock-grid">${sizes.map(sz=>`<label><input type="checkbox" class="size-stock" data-size="${esc(sz)}" ${stock[sz]!==false?'checked':''}> ${esc(sz)}</label>`).join('')}</div><input class="wide size-add-input" placeholder="Добавить размер, например S или 2XL"><button type="button" class="small-btn" onclick="addSize(${i},this)">＋ Добавить размер</button></div>
+        <div class="stock-box wide"><b>🎨 Цвета и наличие</b><div class="color-list">${colors.map((c,j)=>`<div class="color-row"><input class="color-name" data-color-index="${j}" value="${esc(c.name)}" placeholder="Название цвета"><label><input type="checkbox" class="color-stock" data-color-index="${j}" ${c.available!==false?'checked':''}> есть</label><button type="button" class="danger mini" onclick="removeColor(${i},${j})">×</button></div>`).join('')||'<p class="soft">Цвета ещё не добавлены.</p>'}</div><div class="color-add"><input id="newColor_${i}" placeholder="Например: чёрный"><button type="button" class="small-btn" onclick="addColor(${i})">＋ Добавить цвет</button></div></div>
+        <label class="upload-label">📷 Добавить несколько фотографий<input class="photo-input" type="file" accept="image/*" multiple onchange="uploadPhotos(${i},this)"></label>
+        <label class="active-check"><input data-k="active" type="checkbox" ${p.active!==false?'checked':''}> Показывать в магазине</label>
+      </div><div class="actions"><button class="save" onclick="saveProduct(${i})">Сохранить</button><button class="danger" onclick="deleteProduct(${i})">Удалить</button></div></div></div>`;
+  }).join('')||'<p>Товаров пока нет.</p>';
 }
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-
 async function compressImage(file){
   if(!file.type.startsWith('image/'))throw new Error('Выберите изображение');
   const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=reject;x.src=URL.createObjectURL(file)});
   const max=1100,scale=Math.min(1,max/Math.max(img.width,img.height));
   const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);
-  let data=c.toDataURL('image/webp',.78);
-  if(data.length>280000)data=c.toDataURL('image/webp',.58);
-  if(data.length>400000)throw new Error('Фото слишком большое. Выберите другое или уменьшите его.');
-  return data;
+  let data=c.toDataURL('image/webp',.72); if(data.length>220000)data=c.toDataURL('image/webp',.52); if(data.length>360000)throw new Error('Фото слишком большое. Выберите другое или уменьшите его.'); return data;
 }
-window.uploadPhoto=async(i,input)=>{
-  if(!input.files?.[0])return;
-  try{
-    const data=await compressImage(input.files[0]);
-    products[i].image=data;
-    renderProducts();
-    alert('Фото загружено. Нажмите «Сохранить» у товара ♡');
-  }catch(e){alert(e.message)}
+window.uploadPhotos=async(i,input)=>{
+  if(!input.files?.length)return;
+  try{const added=[];for(const f of input.files){added.push(await compressImage(f));}products[i].images=[...(products[i].images||[]),...added];products[i].image=products[i].images[0]||'';renderProducts();alert(`Загружено фото: ${added.length}. Нажмите «Сохранить».`)}catch(e){alert(e.message)}
 };
+window.removeImage=(i,j)=>{products[i].images=(products[i].images||[]).filter((_,x)=>x!==j);products[i].image=products[i].images[0]||'';renderProducts()};
+window.makeMainImage=(i,j)=>{const a=[...(products[i].images||[])];if(!a[j])return;const [x]=a.splice(j,1);a.unshift(x);products[i].images=a;products[i].image=a[0]||'';renderProducts()};
+window.addSize=(i,btn)=>{const input=btn.previousElementSibling;const v=input.value.trim();if(!v)return;products[i].sizes=[...(products[i].sizes||[]),v].filter((x,n,a)=>a.indexOf(x)===n);products[i].sizeStock=products[i].sizeStock||{};products[i].sizeStock[v]=true;input.value='';renderProducts()};
+window.addColor=(i)=>{const input=$('newColor_'+i),v=input.value.trim();if(!v)return;products[i].colors=Array.isArray(products[i].colors)?products[i].colors:[];if(products[i].colors.some(c=>String(c.name).toLowerCase()===v.toLowerCase()))return alert('Такой цвет уже добавлен');products[i].colors.push({name:v,available:true});input.value='';renderProducts()};
+window.removeColor=(i,j)=>{products[i].colors=(products[i].colors||[]).filter((_,x)=>x!==j);renderProducts()};
 
 window.saveProduct=async i=>{
   const box=$('productList').children[i],p=products[i];
-  box.querySelectorAll('[data-k]').forEach(x=>{
-    let k=x.dataset.k;
-    if(k==='price')p[k]=Number(x.value)||0;
-    else if(k==='sizes')p[k]=x.value.split(',').map(s=>s.trim()).filter(Boolean);
-    else if(k==='active')p[k]=x.checked;
-    else p[k]=x.value;
-  });
-  if(!p.category)p.category=categories()[0]||'Одежда';
-  await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});
-  alert('Товар сохранён ♡');load();
+  box.querySelectorAll('[data-k]').forEach(x=>{let k=x.dataset.k;if(k==='price')p[k]=Number(x.value)||0;else if(k==='active')p[k]=x.checked;else p[k]=x.value});
+  const sizes=[...box.querySelectorAll('.size-stock')].map(x=>x.dataset.size);p.sizes=sizes;p.sizeStock=Object.fromEntries([...box.querySelectorAll('.size-stock')].map(x=>[x.dataset.size,x.checked]));
+  p.colors=[...box.querySelectorAll('.color-row')].map(row=>({name:row.querySelector('.color-name').value.trim(),available:row.querySelector('.color-stock').checked})).filter(x=>x.name);
+  p.images=p.images||[];p.image=p.images[0]||p.image||'';if(!p.category)p.category=categories()[0]||'Одежда';
+  await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});alert('Товар сохранён ♡');load();
 };
-
-window.deleteProduct=async i=>{
-  if(!confirm('Удалить товар?'))return;
-  products.splice(i,1);
-  await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});
-  renderProducts();
-};
-
-$('addProduct').onclick=async()=>{
-  const cat=categories()[0]||'Одежда';
-  products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:[...DEFAULT_SIZES],description:'',image:'',active:true});
-  await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});
-  renderProducts();
-};
+window.deleteProduct=async i=>{if(!confirm('Удалить товар?'))return;products.splice(i,1);await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
+$('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
 
 function renderCategories(){
   const list=$('categoryList');
@@ -154,7 +138,7 @@ function renderOrders(){
       <p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}</p>
       <p>💳 <b>${esc(o.payment)}</b> <span class="order-payment-status">${esc(paymentStatusLabel[o.paymentStatus]||o.paymentStatus||'—')}</span></p>
       ${o.receipt?`<div class="receipt-box"><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a>${paymentButtons}</div>`:''}
-      <div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size||'—')} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div>
+      <div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size||'—')} • Цвет: ${esc(x.color||'—')} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div>
       <div class="order-total"><b>Сумма:</b> ${itemTotal?itemTotal.toLocaleString('uk-UA')+' грн':'Цена уточняется'}</div>
       <div class="order-management"><label>Статус ${orderStatusSelect(o)}</label></div>
       <p class="order-comment">Комментарий: ${esc(o.comment||'—')}</p>

@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS products (
   sizes_json TEXT NOT NULL DEFAULT '[]',
   description TEXT NOT NULL DEFAULT '',
   image TEXT NOT NULL DEFAULT '',
-  active INTEGER NOT NULL DEFAULT 1
+  active INTEGER NOT NULL DEFAULT 1,
+  colors_json TEXT NOT NULL DEFAULT '[]',
+  images_json TEXT NOT NULL DEFAULT '[]',
+  size_stock_json TEXT NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -36,7 +39,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   size TEXT NOT NULL DEFAULT '',
   price REAL NOT NULL DEFAULT 0,
   qty INTEGER NOT NULL DEFAULT 1,
-  image TEXT NOT NULL DEFAULT ''
+  image TEXT NOT NULL DEFAULT '',
+  color TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS admin (

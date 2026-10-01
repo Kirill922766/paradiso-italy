@@ -37,6 +37,8 @@ export async function onRequestPost(context) {
   const id = crypto.randomUUID().replaceAll('-', '').slice(0, 10);
   const now = new Date();
   const date = now.toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' });
+  try { await context.env.DB.prepare("ALTER TABLE order_items ADD COLUMN color TEXT NOT NULL DEFAULT ''").run(); } catch {}
+
   const meta = {
     text: String(data.comment || ''),
     paymentStatus: payment === 'Перевод на карту' ? 'receipt_uploaded' : 'not_required',
@@ -50,12 +52,12 @@ export async function onRequestPost(context) {
   ).bind(id, Date.now(), date, name, phone, delivery, String(data.city || ''), String(data.branch || ''), payment, comment).run();
 
   const statements = data.items.map(x => context.env.DB.prepare(
-    'INSERT INTO order_items (order_id, product_id, article, name, size, price, qty, image) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)'
-  ).bind(id, Number(x.id) || 0, String(x.article || ''), String(x.name || ''), String(x.size || ''), Number(x.price || 0), Number(x.qty || 1), String(x.image || '')));
+    'INSERT INTO order_items (order_id, product_id, article, name, size, price, qty, image, color) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)'
+  ).bind(id, Number(x.id) || 0, String(x.article || ''), String(x.name || ''), String(x.size || ''), Number(x.price || 0), Number(x.qty || 1), String(x.image || ''), String(x.color || '')));
   if (statements.length) await context.env.DB.batch(statements);
 
   const total = data.items.reduce((sum, x) => sum + (Number(x.price)||0) * (Number(x.qty)||1), 0);
-  const itemsText = data.items.map(x => `• ${String(x.name||'Товар')} — ${String(x.size||'—')} × ${Number(x.qty||1)}`).join('\n');
+  const itemsText = data.items.map(x => `• ${String(x.name||'Товар')} — ${String(x.size||'—')}${x.color ? ' — '+String(x.color) : ''} × ${Number(x.qty||1)}`).join('\n');
   const totalText = total ? `${total.toLocaleString('uk-UA')} грн` : 'цена уточняется';
   const destination = delivery === 'Новая Почта' ? `${String(data.city||'')}, ${String(data.branch||'')}` : 'Самовывоз: 7 км, Розовая 1315–1316';
   await notifyTelegram(context.env,
