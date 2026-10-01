@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://paradiso-italy.kipillzatorskiy.workers.dev/sitemap.xml
