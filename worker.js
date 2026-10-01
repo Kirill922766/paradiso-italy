@@ -22,6 +22,45 @@ function context(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // SEO files are served directly by the Worker so Cloudflare Assets
+    // cannot inject or cache unexpected content into sitemap.xml.
+    if (request.method === 'GET' && url.pathname === '/sitemap.xml') {
+      const origin = url.origin;
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${origin}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+      return new Response(xml, {
+        status: 200,
+        headers: {
+          'content-type': 'application/xml; charset=UTF-8',
+          'cache-control': 'no-store, no-cache, must-revalidate'
+        }
+      });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/robots.txt') {
+      const robots = `User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: ${url.origin}/sitemap.xml
+`;
+      return new Response(robots, {
+        status: 200,
+        headers: {
+          'content-type': 'text/plain; charset=UTF-8',
+          'cache-control': 'no-store, no-cache, must-revalidate'
+        }
+      });
+    }
+
     if (!url.pathname.startsWith('/api/')) {
       return env.ASSETS.fetch(request);
     }
