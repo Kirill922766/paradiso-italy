@@ -29,7 +29,8 @@ export async function onRequestPost(context) {
   if (!name || !nameRe.test(name)) return json({ error: 'Введите имя и фамилию получателя' }, 400);
   if (!phoneRe.test(phone)) return json({ error: 'Введите номер в формате +380XXXXXXXXX' }, 400);
   if (!delivery || !payment || !Array.isArray(data?.items) || !data.items.length) return json({ error: 'Заполните обязательные поля' }, 400);
-  if (payment !== 'Перевод на карту') return json({ error: 'Оплата возможна только полной оплатой на карту' }, 400);
+  if (delivery === 'Новая Почта' && payment !== 'Перевод на карту') return json({ error: 'Для Новой Почты доступна только полная оплата на карту' }, 400);
+  if (delivery === 'Самовывоз' && !['Перевод на карту','Оплата при получении'].includes(payment)) return json({ error: 'Выберите способ оплаты' }, 400);
   if (delivery === 'Новая Почта' && (!String(data.city||'').trim() || !String(data.branch||'').trim())) return json({ error: 'Выберите город и отделение Новой Почты' }, 400);
   if (payment === 'Перевод на карту' && !String(data.receipt || '').startsWith('data:image/')) return json({ error: 'Для оплаты на карту загрузите фото квитанции' }, 400);
   if (String(data.receipt||'').length > 500000) return json({ error: 'Квитанция слишком большая' }, 400);

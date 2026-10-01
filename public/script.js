@@ -37,9 +37,18 @@ function bindCheckout(){
   $('payment').onchange=togglePayment;
   $('city').addEventListener('input',debounce(loadBranches,350));
   $('checkoutForm').onsubmit=submitOrder;
-  toggleDelivery(true===false);togglePayment();
+  toggleDelivery(false);togglePayment();
 }
-function toggleDelivery(np){if(np){$('npFields').classList.remove('hidden');$('city').required=true;$('branch').required=true;loadCities('')}else{$('npFields').classList.add('hidden');$('city').required=false;$('branch').required=false;$('city').value='';$('branch').value='';} $('pickupNote').classList.toggle('hidden',np)}
+function toggleDelivery(np){
+  if(np){
+    $('npFields').classList.remove('hidden');$('city').required=true;$('branch').required=true;loadCities('');
+    $('payment').value='Перевод на карту';
+  }else{
+    $('npFields').classList.add('hidden');$('city').required=false;$('branch').required=false;$('city').value='';$('branch').value='';
+    if(!$('payment').value||$('payment').value==='Перевод на карту')$('payment').value='Оплата при получении';
+  }
+  $('pickupNote').classList.toggle('hidden',np);togglePayment();
+}
 function togglePayment(){const card=$('payment').value==='Перевод на карту';$('cardBox').classList.toggle('hidden',!card);$('receiptBox').classList.toggle('hidden',!card);$('receipt').required=card;if(card)$('cardInfo').innerHTML=cardHtml()}
 async function loadCities(q){try{const d=await api('/api/novaposhta?mode=cities&q='+encodeURIComponent(q));const list=$('cityList');list.innerHTML=(d.cities||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent='Для живого списка городов и отделений добавьте API-ключ Новой Почты в админке.';else $('npHint').textContent='Начните вводить город — список подгрузится.'}catch(e){}}
 async function loadBranches(){const city=$('city').value.trim();if(city.length<2)return;$('branch').value='';try{const d=await api('/api/novaposhta?mode=branches&q='+encodeURIComponent(city));$('branchList').innerHTML=(d.branches||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent='Для списка отделений нужен API-ключ Новой Пошты в админке.';else $('npHint').textContent=(d.branches||[]).length?'Выберите отделение из подсказок.':'Отделения не найдены — уточните город.'}catch(e){}}

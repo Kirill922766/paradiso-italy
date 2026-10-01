@@ -1,6 +1,6 @@
 import { json, requireAuth, authError } from '../_utils.js';
 const META='__PARADISO_META__';
-const ALLOWED=['new','confirmed','paid','shipped','completed'];
+const ALLOWED=['new','paid','completed'];
 export async function onRequestPost(context){
   if(!(await requireAuth(context))) return authError();
   let data; try{data=await context.request.json()}catch{return json({error:'Неверные данные'},400)}

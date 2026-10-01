@@ -1,4 +1,5 @@
 let products=[],settings={};
+let productSearch='', productCategoryFilter='all';
 const DEFAULT_SIZES=['M','L','XL'];
 const $=id=>document.getElementById(id);
 
@@ -30,7 +31,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==='categories')renderCategories();
 });
 
-async function load(){products=await api('/api/products');products.sort((a,b)=>Number(b.id)-Number(a.id));settings=await api('/api/settings/admin');renderProducts();renderCategories()}
+async function load(){products=await api('/api/products');products.sort((a,b)=>Number(b.id)-Number(a.id));settings=await api('/api/settings/admin');initProductFilters();updateProductCategoryFilter();renderProducts();renderCategories()}
 function categories(){return Array.isArray(settings.categories)?settings.categories:[]}
 function saveAllSettings(){
   return api('/api/settings/save',{method:'POST',body:JSON.stringify(settings)});
@@ -38,13 +39,18 @@ function saveAllSettings(){
 
 function renderProducts(){
   let cats=categories(); if(!cats.length)cats=['Одежда'];
+  const query=productSearch.trim().toLowerCase();
+  const entries=products.map((p,i)=>({p,i})).filter(({p})=>{
+    const hay=[p.name,p.article,p.category,p.description].map(x=>String(x||'').toLowerCase()).join(' ');
+    return (!query || hay.includes(query)) && (productCategoryFilter==='all' || p.category===productCategoryFilter);
+  });
   let el=$('productList');
-  el.innerHTML=products.map((p,i)=>{
+  el.innerHTML=entries.map(({p,i})=>{
     const sizes=(p.sizes||[]).length?(p.sizes||[]):DEFAULT_SIZES;
     const stock=p.sizeStock||Object.fromEntries(sizes.map(x=>[x,true]));
     const colors=Array.isArray(p.colors)?p.colors:[];
     const imgs=Array.isArray(p.images)&&p.images.length?p.images:(p.image?[p.image]:[]);
-    return `<div class="product-edit">
+    return `<div class="product-edit" data-product-index="${i}">
       <div class="admin-gallery">${imgs.map((im,j)=>`<div class="admin-photo ${j===0?'main':''}"><img src="${esc(im)}"><button type="button" class="photo-del" onclick="removeImage(${i},${j})">×</button>${j===0?'<span>Главное</span>':`<button type="button" class="photo-main" onclick="makeMainImage(${i},${j})">Сделать главным</button>`}</div>`).join('')||'<div class="photo-empty">Фото нет</div>'}</div>
       <div><div class="fields">
         <input class="wide" data-k="name" value="${esc(p.name)}" placeholder="Название">
@@ -57,7 +63,15 @@ function renderProducts(){
         <label class="upload-label">📷 Добавить несколько фотографий<input class="photo-input" type="file" accept="image/*" multiple onchange="uploadPhotos(${i},this)"></label>
         <label class="active-check"><input data-k="active" type="checkbox" ${p.active!==false?'checked':''}> Показывать в магазине</label>
       </div><div class="actions"><button class="save" onclick="saveProduct(${i})">Сохранить</button><button class="danger" onclick="deleteProduct(${i})">Удалить</button></div></div></div>`;
-  }).join('')||'<p>Товаров пока нет.</p>';
+  }).join('')||'<p>По вашему фильтру товары не найдены.</p>';
+}
+
+function syncProductDraft(i,box){
+  const p=products[i]; if(!p||!box)return;
+  box.querySelectorAll('[data-k]').forEach(x=>{const k=x.dataset.k;if(k==='price')p[k]=Number(x.value)||0;else if(k==='active')p[k]=x.checked;else p[k]=x.value});
+  const sizes=[...box.querySelectorAll('.size-stock')].map(x=>x.dataset.size); if(sizes.length)p.sizes=sizes;
+  p.sizeStock=Object.fromEntries([...box.querySelectorAll('.size-stock')].map(x=>[x.dataset.size,x.checked]));
+  p.colors=[...box.querySelectorAll('.color-row')].map(row=>({name:row.querySelector('.color-name').value.trim(),available:row.querySelector('.color-stock').checked})).filter(x=>x.name);
 }
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -71,24 +85,37 @@ async function compressImage(file){
 }
 window.uploadPhotos=async(i,input)=>{
   if(!input.files?.length)return;
-  try{const added=[];for(const f of input.files){added.push(await compressImage(f));}products[i].images=[...(products[i].images||[]),...added];products[i].image=products[i].images[0]||'';renderProducts();alert(`Загружено фото: ${added.length}. Нажмите «Сохранить».`)}catch(e){alert(e.message)}
+  const box=input.closest('.product-edit');
+  syncProductDraft(i,box);
+  try{const added=[];for(const f of input.files){added.push(await compressImage(f));}products[i].images=[...(products[i].images||[]),...added];products[i].image=products[i].images[0]||'';renderProducts();alert(`Загружено фото: ${added.length}. Текст, размеры, цвета и остальные поля сохранены. Нажмите «Сохранить».`)}catch(e){alert(e.message)}
 };
-window.removeImage=(i,j)=>{products[i].images=(products[i].images||[]).filter((_,x)=>x!==j);products[i].image=products[i].images[0]||'';renderProducts()};
-window.makeMainImage=(i,j)=>{const a=[...(products[i].images||[])];if(!a[j])return;const [x]=a.splice(j,1);a.unshift(x);products[i].images=a;products[i].image=a[0]||'';renderProducts()};
-window.addSize=(i,btn)=>{const input=btn.previousElementSibling;const v=input.value.trim();if(!v)return;products[i].sizes=[...(products[i].sizes||[]),v].filter((x,n,a)=>a.indexOf(x)===n);products[i].sizeStock=products[i].sizeStock||{};products[i].sizeStock[v]=true;input.value='';renderProducts()};
-window.addColor=(i)=>{const input=$('newColor_'+i),v=input.value.trim();if(!v)return;products[i].colors=Array.isArray(products[i].colors)?products[i].colors:[];if(products[i].colors.some(c=>String(c.name).toLowerCase()===v.toLowerCase()))return alert('Такой цвет уже добавлен');products[i].colors.push({name:v,available:true});input.value='';renderProducts()};
-window.removeColor=(i,j)=>{products[i].colors=(products[i].colors||[]).filter((_,x)=>x!==j);renderProducts()};
+window.removeImage=(i,j)=>{const box=document.querySelector(`.product-edit[data-product-index="${i}"]`);syncProductDraft(i,box);products[i].images=(products[i].images||[]).filter((_,x)=>x!==j);products[i].image=products[i].images[0]||'';renderProducts()};
+window.makeMainImage=(i,j)=>{const box=document.querySelector(`.product-edit[data-product-index="${i}"]`);syncProductDraft(i,box);const a=[...(products[i].images||[])];if(!a[j])return;const [x]=a.splice(j,1);a.unshift(x);products[i].images=a;products[i].image=a[0]||'';renderProducts()};
+window.addSize=(i,btn)=>{const box=btn.closest('.product-edit');syncProductDraft(i,box);const input=btn.previousElementSibling,v=input.value.trim();if(!v)return;products[i].sizes=[...(products[i].sizes||[]),v].filter((x,n,a)=>a.indexOf(x)===n);products[i].sizeStock=products[i].sizeStock||{};products[i].sizeStock[v]=true;input.value='';renderProducts()};
+window.addColor=(i)=>{const box=document.querySelector(`.product-edit[data-product-index="${i}"]`);syncProductDraft(i,box);const input=$('newColor_'+i),v=input.value.trim();if(!v)return;products[i].colors=Array.isArray(products[i].colors)?products[i].colors:[];if(products[i].colors.some(c=>String(c.name).toLowerCase()===v.toLowerCase()))return alert('Такой цвет уже добавлен');products[i].colors.push({name:v,available:true});input.value='';renderProducts()};
+window.removeColor=(i,j)=>{const box=document.querySelector(`.product-edit[data-product-index="${i}"]`);syncProductDraft(i,box);products[i].colors=(products[i].colors||[]).filter((_,x)=>x!==j);renderProducts()};
 
 window.saveProduct=async i=>{
-  const box=$('productList').children[i],p=products[i];
-  box.querySelectorAll('[data-k]').forEach(x=>{let k=x.dataset.k;if(k==='price')p[k]=Number(x.value)||0;else if(k==='active')p[k]=x.checked;else p[k]=x.value});
-  const sizes=[...box.querySelectorAll('.size-stock')].map(x=>x.dataset.size);p.sizes=sizes;p.sizeStock=Object.fromEntries([...box.querySelectorAll('.size-stock')].map(x=>[x.dataset.size,x.checked]));
-  p.colors=[...box.querySelectorAll('.color-row')].map(row=>({name:row.querySelector('.color-name').value.trim(),available:row.querySelector('.color-stock').checked})).filter(x=>x.name);
+  const box=document.querySelector(`.product-edit[data-product-index="${i}"]`),p=products[i];
+  syncProductDraft(i,box);
   p.images=p.images||[];p.image=p.images[0]||p.image||'';if(!p.category)p.category=categories()[0]||'Одежда';
   await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});alert('Товар сохранён ♡');load();
 };
 window.deleteProduct=async i=>{if(!confirm('Удалить товар?'))return;products.splice(i,1);await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
 $('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
+
+function initProductFilters(){
+  const search=$('productSearch'), cat=$('productCategoryFilter');
+  if(search)search.oninput=()=>{productSearch=search.value;renderProducts()};
+  if(cat)cat.onchange=()=>{productCategoryFilter=cat.value;renderProducts()};
+  updateProductCategoryFilter();
+}
+function updateProductCategoryFilter(){
+  const cat=$('productCategoryFilter'); if(!cat)return;
+  const current=productCategoryFilter;
+  cat.innerHTML='<option value="all">Все категории</option>'+categories().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  cat.value=categories().includes(current)?current:'all'; productCategoryFilter=cat.value;
+}
 
 function renderCategories(){
   const list=$('categoryList');
@@ -99,20 +126,20 @@ $('addCategory').onclick=async()=>{
   if(!name)return alert('Введите название категории');
   if(categories().some(c=>c.toLowerCase()===name.toLowerCase()))return alert('Такая категория уже есть');
   settings.categories=[...categories(),name];
-  await saveAllSettings();input.value='';renderCategories();renderProducts();alert('Категория добавлена ♡');
+  await saveAllSettings();input.value='';updateProductCategoryFilter();renderCategories();renderProducts();alert('Категория добавлена ♡');
 };
 window.removeCategory=async i=>{
   const name=categories()[i];
   if(products.some(p=>p.category===name))return alert('В этой категории есть товары. Сначала перенесите или удалите их.');
   if(!confirm('Удалить категорию «'+name+'»?'))return;
   settings.categories=categories().filter((_,x)=>x!==i);
-  await saveAllSettings();renderCategories();renderProducts();
+  await saveAllSettings();updateProductCategoryFilter();renderCategories();renderProducts();
 };
 
 let allOrders=[];
 let orderFilter='all';
-const orderStatusLabels={new:'🔴 Новый',paid:'💳 Оплачен',completed:'🟢 Завершён'};
-const paymentStatusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'—'};
+const orderStatusLabels={new:'🔴 Новый',paid:'💳 Оплата проверена',completed:'🟢 Заказ завершён'};
+const paymentStatusLabel={receipt_uploaded:'Квитанция загружена — проверить',paid:'Оплата подтверждена',rejected:'Оплата отклонена',not_required:'Оплата при получении'};
 
 function updateOrderCounters(){
   const counts={all:allOrders.length,new:0,paid:0,completed:0};
@@ -131,13 +158,13 @@ function renderOrders(){
   const list=orderFilter==='all'?allOrders:allOrders.filter(o=>(o.orderStatus||'new')===orderFilter);
   $('orders').innerHTML=list.map(o=>{
     const itemTotal=(o.items||[]).reduce((sum,x)=>sum+(Number(x.price)||0)*(Number(x.qty)||1),0);
-    const paymentButtons=o.receipt?`<div class="payment-actions">${o.paymentStatus==='receipt_uploaded'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button><button class="danger" onclick="setPayment('${o.id}','rejected')">Отклонить</button>`:''}${o.paymentStatus==='rejected'?`<button onclick="setPayment('${o.id}','paid')">✓ Подтвердить оплату</button>`:''}</div>`:'';
+    const paymentButtons=`<div class="payment-actions">${o.paymentStatus==='receipt_uploaded'?`<button onclick="setPayment('${o.id}','paid')">✓ Оплата проверена</button><button class="danger" onclick="setPayment('${o.id}','rejected')">Отклонить</button>`:''}${o.paymentStatus==='rejected'?`<button onclick="setPayment('${o.id}','paid')">✓ Оплата проверена</button>`:''}${o.payment==='Оплата при получении'&&o.orderStatus!=='completed'?`<button onclick="setPayment('${o.id}','paid')">✓ Оплата получена</button>`:''}${o.orderStatus==='paid'?`<button class="complete-order" onclick="setOrderStatus('${o.id}','completed')">✓ Заказ завершён</button>`:''}</div>`;
     return `<div class="order order-status-${esc(o.orderStatus||'new')}">
       <div class="order-top"><div><b>Заказ #${esc(o.id)}</b> <span class="order-status-pill">${orderStatusLabels[o.orderStatus]||orderStatusLabels.new}</span></div><small>${esc(o.date)}</small></div>
       <div class="order-main-actions"><div><p><b>👤 ${esc(o.name)}</b></p><p>📱 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></p></div><div class="quick-actions"><a class="button-link" href="tel:${esc(o.phone)}">📞 Позвонить</a><button onclick="copyPhone('${esc(o.phone)}')">📋 Скопировать телефон</button></div></div>
       <p>📦 <b>${esc(o.delivery)}</b>${o.city?' • Город: '+esc(o.city):''}${o.branch?' • Отделение: '+esc(o.branch):''}</p>
       <p>💳 <b>${esc(o.payment)}</b> <span class="order-payment-status">${esc(paymentStatusLabel[o.paymentStatus]||o.paymentStatus||'—')}</span></p>
-      ${o.receipt?`<div class="receipt-box"><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a>${paymentButtons}</div>`:''}
+      ${o.receipt?`<div class="receipt-box"><b>Квитанция:</b><br><a href="${esc(o.receipt)}" target="_blank"><img class="receipt-preview" src="${esc(o.receipt)}" alt="Квитанция"></a></div>`:''}${paymentButtons}
       <div class="order-items">${(o.items||[]).map(x=>`<div class="order-product"><img src="${esc(x.image||'')}" onerror="this.style.display='none'"><div><b>${esc(x.name)}</b><br><small>Артикул: ${esc(x.article||'—')} • Размер: ${esc(x.size||'—')} • Цвет: ${esc(x.color||'—')} • Кол-во: ${esc(x.qty||1)}${x.price?' • '+Number(x.price).toLocaleString('uk-UA')+' грн':''}</small></div></div>`).join('')}</div>
       <div class="order-total"><b>Сумма:</b> ${itemTotal?itemTotal.toLocaleString('uk-UA')+' грн':'Цена уточняется'}</div>
       <div class="order-management"><label>Статус ${orderStatusSelect(o)}</label></div>
