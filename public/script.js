@@ -7,7 +7,7 @@ const I18N={
   heroTitle:'Красивые вещи',heroSubtitle:'с итальянским настроением.',heroText:'Одежда для женщин, которую приятно выбирать, примерять и носить каждый день. Заходите в наш магазин на 7 км или оформляйте заказ онлайн.',
   heroCatalog:'Смотреть одежду',heroFind:'Как нас найти',collection:'КОЛЛЕКЦИЯ',ourItems:'Наши вещи',
   catalogHint:'Нажмите на товар, чтобы посмотреть детали и выбрать размер.',all:'Все',new:'🆕 Новинки',hit:'⭐ Хиты',favorites:'♡ Избранное',
-  color:'Цвет',size:'Размер',addToCart:'Добавить в корзину 🛍',chooseSize:'Выберите размер',chooseColor:'Выберите цвет',
+  color:'Цвет',size:'Размер',addToCart:'Добавить в корзину 🛍',chooseSize:'Выберите размер',chooseColor:'Выберите цвет',addedTitle:'Товар добавлен в корзину ✓',continueShopping:'Продолжить покупки',goToCheckout:'Оформить заказ',cartItemsAdded:'Товар добавлен. Можно продолжить покупки или оформить заказ.',
   yourOrder:'ВАШ ЗАКАЗ',total:'Итого:',checkout:'Перейти к оформлению',checkoutTitleSmall:'ОФОРМЛЕНИЕ',whereOrder:'Куда отправить заказ?',
   deliveryHow:'Как получить заказ?',pickup:'Самовывоз',nova:'Новая Почта',paymentMethod:'Способ оплаты',payOnPickup:'💵 Оплата при получении',payCard:'💳 Полная оплата на карту',
   placeOrder:'Оформить заказ 🛍',successTitle:'Заказ успешно оформлен!',successText:'Спасибо! Мы получили ваш заказ и свяжемся с вами для подтверждения.',backShop:'Вернуться в магазин',
@@ -22,7 +22,7 @@ const I18N={
   heroTitle:'Красиві речі',heroSubtitle:'з італійським настроєм.',heroText:'Жіночий одяг, який приємно обирати, приміряти та носити щодня. Завітайте до нашого магазину на 7 км або оформлюйте замовлення онлайн.',
   heroCatalog:'Дивитися одяг',heroFind:'Як нас знайти',collection:'КОЛЕКЦІЯ',ourItems:'Наші речі',
   catalogHint:'Натисніть на товар, щоб переглянути деталі та обрати розмір.',all:'Усі',new:'🆕 Новинки',hit:'⭐ Хіти',favorites:'♡ Обране',
-  color:'Колір',size:'Розмір',addToCart:'Додати до кошика 🛍',chooseSize:'Оберіть розмір',chooseColor:'Оберіть колір',
+  color:'Колір',size:'Розмір',addToCart:'Додати до кошика 🛍',chooseSize:'Оберіть розмір',chooseColor:'Оберіть колір',addedTitle:'Товар додано до кошика ✓',continueShopping:'Продовжити покупки',goToCheckout:'Оформити замовлення',cartItemsAdded:'Товар додано. Можна продовжити покупки або оформити замовлення.',
   yourOrder:'ВАШЕ ЗАМОВЛЕННЯ',total:'Разом:',checkout:'Перейти до оформлення',checkoutTitleSmall:'ОФОРМЛЕННЯ',whereOrder:'Куди відправити замовлення?',
   deliveryHow:'Як отримати замовлення?',pickup:'Самовивіз',nova:'Нова Пошта',paymentMethod:'Спосіб оплати',payOnPickup:'💵 Оплата при отриманні',payCard:'💳 Повна оплата на картку',
   placeOrder:'Оформити замовлення 🛍',successTitle:'Замовлення успішно оформлено!',successText:'Дякуємо! Ми отримали ваше замовлення та зв’яжемося з вами для підтвердження.',backShop:'Повернутися до магазину',
@@ -138,7 +138,10 @@ $('addToCart').onclick=()=>{
  if((current.colors||[]).some(c=>c.available!==false)&&!selectedColor){$('sizeHint').textContent=t('selectColor');return}
  let old=cart.find(x=>x.id===current.id&&x.size===selectedSize&&x.color===selectedColor);
  if(old)old.qty++;else cart.push({id:current.id,name:current.name,size:selectedSize,color:selectedColor||'',price:current.price||0,oldPrice:current.oldPrice||0,image:(current.images&&current.images[0])||current.image,qty:1});
- saveLocal();updateCart();closeAll();$('cartModal').classList.remove('hidden')
+ saveLocal();updateCart();
+ closeAll();
+ $('cartAddedModal').classList.remove('hidden');
+ document.body.classList.add('modal-open');
 };
 function updateCart(){
  $('cartCount').textContent=cart.reduce((a,x)=>a+x.qty,0);
@@ -146,6 +149,14 @@ function updateCart(){
  let total=cart.reduce((a,x)=>a+(Number(x.price)||0)*x.qty,0);$('cartTotal').textContent=total?total.toLocaleString('uk-UA')+' грн':t('pricePending');$('cartTotalCount').textContent=cart.length?'('+cart.reduce((a,x)=>a+x.qty,0)+')':'';$('checkoutBtn').disabled=!cart.length;
 }
 window.removeCart=i=>{cart.splice(i,1);saveLocal();updateCart()};$('cartBtn').onclick=()=>{$('cartModal').classList.remove('hidden');document.body.classList.add('modal-open')};$('checkoutBtn').onclick=()=>{if(!cart.length)return;closeAll();$('checkoutModal').classList.remove('hidden');document.body.classList.add('modal-open');$('orderStatus').textContent=''};
+$('continueShoppingBtn').onclick=()=>{closeAll()};
+$('addedCheckoutBtn').onclick=()=>{
+ closeAll();
+ if(!cart.length)return;
+ $('checkoutModal').classList.remove('hidden');
+ document.body.classList.add('modal-open');
+ $('orderStatus').textContent='';
+};
 function bindCheckout(){
  document.querySelectorAll('input[name="delivery"]').forEach(r=>r.onchange=()=>toggleDelivery(r.value==='Новая Почта'&&r.checked));
  $('payment').onchange=togglePayment;$('city').addEventListener('input',debounce(loadBranches,350));$('checkoutForm').onsubmit=submitOrder;toggleDelivery(false);togglePayment()
