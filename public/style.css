@@ -40,62 +40,9 @@ body.modal-open{overflow:hidden;overscroll-behavior:none}
 .product-modal #modalGallery{overscroll-behavior:contain;scrollbar-width:thin}
 .product-modal .modal-content{max-height:92vh;overflow-y:auto;overscroll-behavior:contain}
 @media(max-width:760px){
-  /* Mobile product modal: keep the photo compact and make the details area scrollable. */
-  .product-modal{
-    max-height:94dvh;
-    height:94dvh;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    min-height:0;
-  }
-  .product-modal #modalPhoto{
-    height:40dvh;
-    max-height:360px;
-    min-height:240px;
-    flex:0 0 auto;
-    overflow:hidden;
-  }
-  .product-modal #modalGallery{
-    flex:0 0 auto;
-    max-height:82px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    padding:8px;
-    touch-action:pan-x;
-  }
-  .product-modal .modal-content{
-    flex:1 1 auto;
-    min-height:0;
-    max-height:none;
-    overflow-y:auto;
-    overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
-    touch-action:pan-y;
-    padding:20px 18px 28px;
-  }
-  .product-modal .modal-content h3{
-    font-size:30px;
-  }
-  .product-modal .modal-content p{
-    margin-bottom:8px;
-  }
-  .product-modal .modal-content label{
-    margin-top:18px;
-  }
-  .product-modal #addToCart{
-    position:sticky;
-    bottom:0;
-    z-index:3;
-    margin-top:18px;
-    margin-bottom:2px;
-    min-height:50px;
-    box-shadow:0 -8px 18px rgba(255,255,255,.92);
-  }
-  .product-modal .hint{
-    padding-bottom:4px;
-  }
+  .product-modal{max-height:94vh}
+  .product-modal #modalPhoto{height:52vh;max-height:520px;min-height:300px}
+  .product-modal .modal-content{max-height:none;overflow:visible}
   .modal{overscroll-behavior:none}
 }
 
@@ -103,3 +50,17 @@ body.modal-open{overflow:hidden;overscroll-behavior:none}
 .lang-switch{display:flex;gap:3px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px}
 .lang-switch button{border:0;background:transparent;border-radius:999px;padding:7px 9px;font:700 11px inherit;color:var(--muted);cursor:pointer}
 .lang-switch button.active{background:var(--pink);color:var(--ink)}
+
+/* Final photo grid sizing: uploaded photos always fill the same visual frame */
+.photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.product-modal #modalPhoto{width:100%;display:flex;align-items:center;justify-content:center;background:#f3eeee}
+.product-modal #modalPhoto img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:cover;object-position:center}
+.product-modal #modalGallery{width:100%;box-sizing:border-box}
+.product-modal #modalGallery .gallery-thumb{overflow:hidden}
+@media(max-width:760px){
+  .product-modal #modalPhoto{width:100%;height:390px;min-height:0;max-height:55vh}
+  .product-modal #modalPhoto img{width:100%;height:100%;object-fit:cover;object-position:center}
+}
+@media(max-width:520px){
+  .product-modal #modalPhoto{width:100%;height:360px;min-height:0;max-height:52vh}
+}
