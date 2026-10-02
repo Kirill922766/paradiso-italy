@@ -56,8 +56,16 @@ function renderProducts(){
         <input class="wide" data-k="name" value="${esc(p.name)}" placeholder="Название">
         <input data-k="article" value="${esc(p.article)}" placeholder="Артикул">
         <select data-k="category">${cats.map(c=>`<option ${c===p.category?'selected':''}>${esc(c)}</option>`).join('')}</select>
-        <input data-k="price" type="number" min="0" value="${p.price||''}" placeholder="Цена, грн">
+        <div class="price-fields">
+          <input data-k="price" type="number" min="0" value="${p.price||''}" placeholder="Цена, грн">
+          <input data-k="oldPrice" type="number" min="0" value="${p.oldPrice||''}" placeholder="Старая цена, грн (для акции)">
+        </div>
         <textarea class="wide" data-k="description" placeholder="Описание">${esc(p.description)}</textarea>
+        <div class="badges-box wide">
+          <b>🏷️ Отметки товара</b>
+          <label><input data-k="isNew" type="checkbox" ${p.isNew?'checked':''}> 🆕 Новинка</label>
+          <label><input data-k="isHit" type="checkbox" ${p.isHit?'checked':''}> ⭐ Хит</label>
+        </div>
         <div class="stock-box wide"><b>📏 Размеры и наличие</b><div class="stock-grid">${sizes.map(sz=>`<label><input type="checkbox" class="size-stock" data-size="${esc(sz)}" ${stock[sz]!==false?'checked':''}> ${esc(sz)}</label>`).join('')}</div><input class="wide size-add-input" placeholder="Добавить размер, например S или 2XL"><button type="button" class="small-btn" onclick="addSize(${i},this)">＋ Добавить размер</button></div>
         <div class="stock-box wide"><b>🎨 Цвета и наличие</b><div class="color-list">${colors.map((c,j)=>`<div class="color-row"><input class="color-name" data-color-index="${j}" value="${esc(c.name)}" placeholder="Название цвета"><label><input type="checkbox" class="color-stock" data-color-index="${j}" ${c.available!==false?'checked':''}> есть</label><button type="button" class="danger mini" onclick="removeColor(${i},${j})">×</button></div>`).join('')||'<p class="soft">Цвета ещё не добавлены.</p>'}</div><div class="color-add"><input id="newColor_${i}" placeholder="Например: чёрный"><button type="button" class="small-btn" onclick="addColor(${i})">＋ Добавить цвет</button></div></div>
         <label class="upload-label">📷 Добавить несколько фотографий<input class="photo-input" type="file" accept="image/*" multiple onchange="uploadPhotos(${i},this)"></label>
@@ -68,7 +76,7 @@ function renderProducts(){
 
 function syncProductDraft(i,box){
   const p=products[i]; if(!p||!box)return;
-  box.querySelectorAll('[data-k]').forEach(x=>{const k=x.dataset.k;if(k==='price')p[k]=Number(x.value)||0;else if(k==='active')p[k]=x.checked;else p[k]=x.value});
+  box.querySelectorAll('[data-k]').forEach(x=>{const k=x.dataset.k;if(k==='price'||k==='oldPrice')p[k]=Number(x.value)||0;else if(k==='active'||k==='isNew'||k==='isHit')p[k]=x.checked;else p[k]=x.value});
   const sizes=[...box.querySelectorAll('.size-stock')].map(x=>x.dataset.size); if(sizes.length)p.sizes=sizes;
   p.sizeStock=Object.fromEntries([...box.querySelectorAll('.size-stock')].map(x=>[x.dataset.size,x.checked]));
   p.colors=[...box.querySelectorAll('.color-row')].map(row=>({name:row.querySelector('.color-name').value.trim(),available:row.querySelector('.color-stock').checked})).filter(x=>x.name);
@@ -102,7 +110,7 @@ window.saveProduct=async i=>{
   await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});alert('Товар сохранён ♡');load();
 };
 window.deleteProduct=async i=>{if(!confirm('Удалить товар?'))return;products.splice(i,1);await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
-$('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
+$('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:'Новый товар',category:cat,price:0,oldPrice:0,isNew:true,isHit:false,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
 
 function initProductFilters(){
   const search=$('productSearch'), cat=$('productCategoryFilter');

@@ -8,14 +8,16 @@
 <meta name="author" content="PARADISO Made & ITALY">
 <meta name="application-name" content="PARADISO Made & ITALY">
 <meta property="og:locale" content="ru_UA">
-<meta property="og:image" content="https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.png">
+<meta property="og:image" content="https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="PARADISO Made & ITALY — женская одежда">
+<meta property="og:image:type" content="image/jpeg">
+<meta name="twitter:image:alt" content="PARADISO Made & ITALY — женская одежда">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PARADISO Made & ITALY — женская одежда в Одессе">
 <meta name="twitter:description" content="Женская одежда оптом и в розницу. 7 км, Одесса. Каталог и заказ онлайн.">
-<meta name="twitter:image" content="https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.png">
+<meta name="twitter:image" content="https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.jpg">
 <link rel="canonical" href="https://paradiso-italy.kipillzatorskiy.workers.dev/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PARADISO Made & ITALY">
@@ -33,7 +35,7 @@
   "name":"PARADISO Made & ITALY",
   "url":"https://paradiso-italy.kipillzatorskiy.workers.dev/",
   "description":"Женская одежда оптом и в розницу в Одессе на 7 км. Каталог, выбор размера и заказ онлайн.",
-  "image":"https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.png",
+  "image":"https://paradiso-italy.kipillzatorskiy.workers.dev/images/social-preview.jpg",
   "areaServed":[
     {"@type":"City","name":"Одесса"},
     {"@type":"Country","name":"Украина"}
@@ -57,8 +59,8 @@
       <span class="brand-sub">Made &amp; ITALY</span>
       <span class="brand-flower">✦</span>
     </a>
-    <nav><a href="#catalog">Каталог</a><a href="#about">О нас</a><a href="#contacts">Контакты</a></nav>
-    <button class="cart-pill" id="cartBtn">🛍 Корзина <b id="cartCount">0</b></button>
+    <nav><a href="#catalog" data-i18n="navCatalog">Каталог</a><a href="#about" data-i18n="navAbout">О нас</a><a href="#contacts" data-i18n="navContacts">Контакты</a></nav>
+    <div class="nav-actions"><button class="lang-pill" id="langToggle">UA</button><button class="fav-pill" id="favBtn">♡ <b id="favCount">0</b></button><button class="cart-pill" id="cartBtn">🛍 <span data-i18n="cart">Корзина</span> <b id="cartCount">0</b></button></div>
   </div>
 </header>
 
@@ -66,10 +68,10 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <div class="tiny">PARADISO ITALY • ОПТ / РОЗНИЦА</div>
-      <h1>Красивые вещи<br><i>с итальянским настроением.</i></h1>
-      <p>Одежда для женщин, которую приятно выбирать, примерять и носить каждый день. Заходите в наш магазин на 7 км или оформляйте заказ онлайн.</p>
-      <div class="hero-buttons"><a class="btn dark" href="#catalog">Смотреть одежду</a><a class="btn light" href="#contacts">Как нас найти</a></div>
+      <div class="tiny" data-i18n="heroTiny">PARADISO ITALY • ОПТ / РОЗНИЦА</div>
+      <h1><span data-i18n="heroTitle">Красивые вещи</span><br><i data-i18n="heroSubtitle">с итальянским настроением.</i></h1>
+      <p data-i18n="heroText">Одежда для женщин, которую приятно выбирать, примерять и носить каждый день. Заходите в наш магазин на 7 км или оформляйте заказ онлайн.</p>
+      <div class="hero-buttons"><a class="btn dark" href="#catalog" data-i18n="heroCatalog">Смотреть одежду</a><a class="btn light" href="#contacts" data-i18n="heroFind">Как нас найти</a></div>
     </div>
     <div class="hero-art">
       <div class="ornament">PARADISO<br><span>Made &amp; ITALY</span></div>
@@ -86,8 +88,8 @@
 </div></section>
 
 <section id="catalog" class="section"><div class="wrap">
-  <div class="section-title"><div><div class="tiny">КОЛЛЕКЦИЯ</div><h2>Наши вещи</h2></div><div class="soft">Нажмите на товар, чтобы посмотреть детали и выбрать размер.</div></div>
-  <div class="catalog-head"><div id="cats" class="cats"></div></div>
+  <div class="section-title"><div><div class="tiny" data-i18n="collection">КОЛЛЕКЦИЯ</div><h2 data-i18n="ourItems">Наши вещи</h2></div><div class="soft" data-i18n="catalogHint">Нажмите на товар, чтобы посмотреть детали и выбрать размер.</div></div>
+  <div class="catalog-head"><div id="smartFilters" class="smart-filters"></div><div id="cats" class="cats"></div></div>
   <div id="products" class="products"></div>
   <div id="empty" class="empty hidden">Пока ничего не найдено ♡</div>
 </div></section>
@@ -114,40 +116,40 @@
 
 <div id="productModal" class="modal hidden"><div class="shade"></div><div class="modal-box product-modal"><button class="x" data-close>×</button><div id="modalPhoto"></div><div id="modalGallery" class="modal-gallery"></div><div class="modal-content">
   <div class="tiny" id="modalCat"></div><h3 id="modalName"></h3><div id="modalPrice" class="price"></div><p id="modalDesc"></p>
-  <label>Цвет</label><div id="colors" class="colors"></div><label>Размер</label><div id="sizes" class="sizes"></div>
-  <button id="addToCart" class="btn dark full">Добавить в корзину 🛍</button>
-  <div id="sizeHint" class="hint">Выберите размер</div>
+  <label data-i18n="color">Цвет</label><div id="colors" class="colors"></div><label data-i18n="size">Размер</label><div id="sizes" class="sizes"></div>
+  <button id="addToCart" class="btn dark full" data-i18n="addToCart">Добавить в корзину 🛍</button>
+  <div id="sizeHint" class="hint" data-i18n="chooseSize">Выберите размер</div>
 </div></div></div>
 
-<div id="cartModal" class="modal hidden"><div class="shade"></div><div class="modal-box cart-modal"><button class="x" data-close>×</button><div class="tiny">ВАШ ЗАКАЗ</div><h3>Корзина <span id="cartTotalCount"></span></h3><div id="cartItems"></div><div class="cart-summary"><b>Итого:</b><strong id="cartTotal"></strong></div>
-<button id="checkoutBtn" class="btn dark full">Перейти к оформлению</button></div></div>
+<div id="cartModal" class="modal hidden"><div class="shade"></div><div class="modal-box cart-modal"><button class="x" data-close>×</button><div class="tiny" data-i18n="yourOrder">ВАШ ЗАКАЗ</div><h3><span data-i18n="cart">Корзина</span> <span id="cartTotalCount"></span></h3><div id="cartItems"></div><div class="cart-summary"><b data-i18n="total">Итого:</b><strong id="cartTotal"></strong></div>
+<button id="checkoutBtn" class="btn dark full" data-i18n="checkout">Перейти к оформлению</button></div></div>
 
-<div id="checkoutModal" class="modal hidden"><div class="shade"></div><div class="modal-box checkout-modal"><button class="x" data-close>×</button><div class="tiny">ОФОРМЛЕНИЕ</div><h3>Куда отправить заказ?</h3>
+<div id="checkoutModal" class="modal hidden"><div class="shade"></div><div class="modal-box checkout-modal"><button class="x" data-close>×</button><div class="tiny" data-i18n="checkoutTitleSmall">ОФОРМЛЕНИЕ</div><h3 data-i18n="whereOrder">Куда отправить заказ?</h3>
 <form id="checkoutForm">
 <input required name="name" placeholder="Имя и фамилия получателя" autocomplete="name" pattern=".*\s+.*" title="Введите имя и фамилию">
 <input required name="phone" placeholder="+380XXXXXXXXX" autocomplete="tel" inputmode="tel" pattern="\+380[0-9]{9}" title="Введите номер в формате +380XXXXXXXXX">
-<div class="choice-title">Как получить заказ?</div>
-<div class="choice"><label><input type="radio" name="delivery" value="Самовывоз" checked> 🏠 Самовывоз</label><label><input type="radio" name="delivery" value="Новая Почта"> 📦 Новая Почта</label></div>
+<div class="choice-title" data-i18n="deliveryHow">Как получить заказ?</div>
+<div class="choice"><label><input type="radio" name="delivery" value="Самовывоз" checked> 🏠 <span data-i18n="pickup">Самовывоз</span></label><label><input type="radio" name="delivery" value="Новая Почта"> 📦 <span data-i18n="nova">Новая Почта</span></label></div>
 <div id="pickupNote" class="success">Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения менеджером.</div>
 <div id="npFields" class="np-fields hidden">
   <div><input name="city" id="city" list="cityList" placeholder="Начните вводить город"><datalist id="cityList"></datalist></div>
   <div><input name="branch" id="branch" list="branchList" placeholder="Выберите отделение"><datalist id="branchList"></datalist></div>
   <div id="npHint" class="soft np-hint">Начните вводить город — список подгрузится.</div>
 </div>
-<div class="choice-title">Способ оплаты</div>
+<div class="choice-title" data-i18n="paymentMethod">Способ оплаты</div>
 <div class="payment-select">
 <select required name="payment" id="payment">
-<option value="Оплата при получении">💵 Оплата при получении</option>
-<option value="Перевод на карту">💳 Полная оплата на карту</option>
+<option value="Оплата при получении" data-i18n="payOnPickup">💵 Оплата при получении</option>
+<option value="Перевод на карту" data-i18n="payCard">💳 Полная оплата на карту</option>
 </select></div>
 <div id="cardBox" class="card-box hidden"><div id="cardInfo"></div></div>
 <label id="receiptBox" class="receipt-box hidden">Фото квитанции об оплате<input id="receipt" name="receipt" type="file" accept="image/*"></label>
 <div id="orderStatus" class="error hidden"></div>
 <textarea name="comment" placeholder="Комментарий к заказу"></textarea>
-<button class="btn dark full" type="submit">Оформить заказ 🛍</button>
+<button class="btn dark full" type="submit" data-i18n="placeOrder">Оформить заказ 🛍</button>
 </form></div></div>
 
-<div id="successModal" class="modal hidden"><div class="shade"></div><div class="modal-box success-box"><div class="success-icon">✓</div><h3>Заказ успешно оформлен!</h3><p id="successText">Спасибо! Мы получили ваш заказ и свяжемся с вами для подтверждения.</p><div class="success-order" id="successOrder"></div><button class="btn dark full" data-close-success>Вернуться в магазин</button></div></div>
+<div id="successModal" class="modal hidden"><div class="shade"></div><div class="modal-box success-box"><div class="success-icon">✓</div><h3 data-i18n="successTitle">Заказ успешно оформлен!</h3><p id="successText" data-i18n="successText">Спасибо! Мы получили ваш заказ и свяжемся с вами для подтверждения.</p><div class="success-order" id="successOrder"></div><button class="btn dark full" data-close-success data-i18n="backShop">Вернуться в магазин</button></div></div>
 
 <script src="script.js"></script>
 </body></html>

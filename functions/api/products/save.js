@@ -4,7 +4,10 @@ async function ensureColumns(db) {
   const alters = [
     "ALTER TABLE products ADD COLUMN colors_json TEXT NOT NULL DEFAULT '[]'",
     "ALTER TABLE products ADD COLUMN images_json TEXT NOT NULL DEFAULT '[]'",
-    "ALTER TABLE products ADD COLUMN size_stock_json TEXT NOT NULL DEFAULT '{}'"
+    "ALTER TABLE products ADD COLUMN size_stock_json TEXT NOT NULL DEFAULT '{}'",
+    "ALTER TABLE products ADD COLUMN old_price REAL NOT NULL DEFAULT 0",
+    "ALTER TABLE products ADD COLUMN is_new INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE products ADD COLUMN is_hit INTEGER NOT NULL DEFAULT 0"
   ];
   for (const sql of alters) { try { await db.prepare(sql).run(); } catch {} }
 }
@@ -33,11 +36,12 @@ export async function onRequestPost(context) {
     const images = normalizeImages(p.images, p.image);
     const image = images[0] || String(p.image || '');
     statements.push(context.env.DB.prepare(
-      'INSERT INTO products (id, article, name, category, price, sizes_json, description, image, active, colors_json, images_json, size_stock_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)'
+      'INSERT INTO products (id, article, name, category, price, sizes_json, description, image, active, colors_json, images_json, size_stock_json, old_price, is_new, is_hit) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)'
     ).bind(
       Number(p.id), String(p.article || ''), String(p.name || ''), String(p.category || 'Одежда'),
       Number(p.price || 0), JSON.stringify(sizes), String(p.description || ''), image, p.active === false ? 0 : 1,
-      JSON.stringify(colors), JSON.stringify(images), JSON.stringify(sizeStock)
+      JSON.stringify(colors), JSON.stringify(images), JSON.stringify(sizeStock),
+      Number(p.oldPrice || 0), p.isNew ? 1 : 0, p.isHit ? 1 : 0
     ));
   }
   await context.env.DB.batch(statements);

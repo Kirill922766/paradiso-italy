@@ -10,7 +10,10 @@ CREATE TABLE IF NOT EXISTS products (
   active INTEGER NOT NULL DEFAULT 1,
   colors_json TEXT NOT NULL DEFAULT '[]',
   images_json TEXT NOT NULL DEFAULT '[]',
-  size_stock_json TEXT NOT NULL DEFAULT '{}'
+  size_stock_json TEXT NOT NULL DEFAULT '{}',
+  old_price REAL NOT NULL DEFAULT 0,
+  is_new INTEGER NOT NULL DEFAULT 0,
+  is_hit INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS settings (
