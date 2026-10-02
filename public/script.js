@@ -15,7 +15,7 @@ const I18N={
   selectedSize:'Выбран размер: ',selectedColor:'Выбран цвет: ',article:'Артикул: ',colorLabel:'Цвет ',sizeLabel:'Размер ',qty:'Кол-во: ',sale:'Акция',newBadge:'Новинка',hitBadge:'Хит',
   noProducts:'Пока ничего не найдено ♡',orderName:'Имя и фамилия получателя',comment:'Комментарий к заказу',receipt:'Фото квитанции об оплате',
   npCity:'Начните вводить город',npBranch:'Выберите отделение',npHint:'Начните вводить город — список подгрузится.',paymentCardHint:'Полная оплата на карту',
-  copy:'Скопировано ✓'
+  copy:'Скопировано ✓',benefitWholesale:'Опт и розница',benefitItalian:'Итальянская одежда',benefitAddress:'7 км, Одесса',benefitHelp:'Поможем подобрать',heroNote:'нежно • удобно • по-итальянски ♡',aboutTitle:'Немного Италии<br>в вашем гардеробе.',aboutText1:'Мы работаем в формате <b>опт / розница</b>. Если не знаете, какой размер выбрать — напишите или позвоните нам, и мы поможем.',aboutText2:'А если вы приехали на 7 км лично, будем рады показать модели вживую.',contactTiny:'ЖДЁМ ВАС',wholesaleRetail:'Опт / Розница',adminLogin:'Вход для администратора'
  },
  ua:{
   navCatalog:'Каталог',navAbout:'Про нас',navContacts:'Контакти',cart:'Кошик',heroTiny:'PARADISO ITALY • ОПТ / РОЗДРІБ',
@@ -43,19 +43,20 @@ function saveLocal(){localStorage.setItem('paradiso_cart',JSON.stringify(cart));
 async function init(){loadLocal();products=await api('/api/products');settings=await api('/api/settings');applyLanguage();renderCats();renderSpecialFilters();render();applySettings();updateCart();updateFavorites();bindCheckout()}
 function applyLanguage(){
  document.documentElement.lang=lang;
- document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(I18N[lang][k])el.textContent=t(k)});
- const toggle=$('langToggle');if(toggle)toggle.textContent=lang==='ru'?'UA':'RU';
- const name=$('checkoutForm')?.querySelector('[name="name"]');if(name)name.placeholder=t('orderName');
- const comment=$('checkoutForm')?.querySelector('[name="comment"]');if(comment)comment.placeholder=t('comment');
- const receipt=$('receiptBox');if(receipt){const input=receipt.querySelector('input');receipt.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=t('receipt')});if(input)input.setAttribute('aria-label',t('receipt'))}
+ document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(I18N[lang][k])el.innerHTML=t(k)});
+ const ru=$('langRu'),ua=$('langUa');if(ru&&ua){ru.classList.toggle('active',lang==='ru');ua.classList.toggle('active',lang==='ua')}
+ const name=$('checkoutForm')?.querySelector('[name=\"name\"]');if(name)name.placeholder=t('orderName');
+ const comment=$('checkoutForm')?.querySelector('[name=\"comment\"]');if(comment)comment.placeholder=t('comment');
+ const receipt=$('receiptBox');if(receipt){const input=receipt.querySelector('input');receipt.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=' '+t('receipt')});if(input)input.setAttribute('aria-label',t('receipt'))}
  const city=$('city'),branch=$('branch');if(city)city.placeholder=t('npCity');if(branch)branch.placeholder=t('npBranch');
  const npHint=$('npHint');if(npHint&&!npHint.textContent.includes('API'))npHint.textContent=t('npHint');
  if($('payment')){const opts=$('payment').options;if(opts[0])opts[0].textContent=t('payOnPickup');if(opts[1])opts[1].textContent=t('payCard')}
+ if($('pickupNote'))$('pickupNote').textContent=((lang==='ua'&&(!settings.pickupNote||/Самовывоз|Розовая/.test(settings.pickupNote)))?'Самовивіз: 7 км, Розова 1315–1316. Прийдіть до магазину та заберіть замовлення після підтвердження менеджером.':(lang==='ru'&&(!settings.pickupNote||/Самовивіз|Розова/.test(settings.pickupNote))?'Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения менеджером.':settings.pickupNote));
  if(current)openProduct(current.id,true);
- renderCats();renderSpecialFilters();render(currentCategory);
- updateCart();
+ renderCats();renderSpecialFilters();render(currentCategory);updateCart();
 }
-$('langToggle')?.addEventListener('click',()=>{lang=lang==='ru'?'ua':'ru';localStorage.setItem('paradiso_lang',lang);applyLanguage()});
+$('langRu')?.addEventListener('click',()=>{lang='ru';localStorage.setItem('paradiso_lang',lang);applyLanguage()});
+$('langUa')?.addEventListener('click',()=>{lang='ua';localStorage.setItem('paradiso_lang',lang);applyLanguage()});
 function normalizeUrl(url){let v=String(url||'').trim();if(v&&!/^https?:\/\//i.test(v))v='https://'+v;return v}
 function applySettings(){
  const setLink=(id,url)=>{const el=$(id);const v=normalizeUrl(url);if(v)el.href=v;else if(el)el.style.display='none'};
@@ -64,13 +65,25 @@ function applySettings(){
  contacts.forEach(([nameId,phoneId,name,phone])=>{const n=$(nameId),b=$(phoneId);if(n)n.textContent=name||'';if(b){b.textContent=phone||'';b.dataset.phone=phone||'';}});
  document.querySelectorAll('.copy-phone').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.phone);const old=b.textContent;b.textContent=t('copy');setTimeout(()=>b.textContent=old,1200)}catch(e){prompt('Скопируйте номер:',b.dataset.phone)}});
  $('year').textContent=new Date().getFullYear();
- if($('pickupNote'))$('pickupNote').textContent=settings.pickupNote||(lang==='ua'?'Самовивіз: 7 км, Розова 1315–1316. Прийдіть до магазину та заберіть замовлення після підтвердження менеджером.':'Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения менеджером.');
+ if($('pickupNote'))$('pickupNote').textContent=((lang==='ua'&&(!settings.pickupNote||/Самовывоз|Розовая/.test(settings.pickupNote)))?( 'Самовивіз: 7 км, Розова 1315–1316. Прийдіть до магазину та заберіть замовлення після підтвердження менеджером.'):(lang==='ru'&&(!settings.pickupNote||/Самовивіз|Розова/.test(settings.pickupNote))?('Самовывоз: 7 км, Розовая 1315–1316. Приходите в магазин и заберите заказ после подтверждения менеджером.'):settings.pickupNote));
  if($('cardInfo'))$('cardInfo').innerHTML=cardHtml();
 }
 function cardHtml(){const n=String(settings.cardNumber||'').replace(/(\d{4})(?=\d)/g,'$1 ');return `<b>${esc(t('paymentCardHint'))}</b><br>${n||'Номер карты будет указан менеджером'}${settings.cardName?`<br>${esc(settings.cardName)}`:''}${settings.cardBank?`<br><small>${esc(settings.cardBank)}</small>`:''}`}
+
+function translateCategory(c){
+ const map={
+  'Костюмы':['Костюмы','Костюми'],'Костюми':['Костюмы','Костюми'],
+  'Платья':['Платья','Сукні'],'Плаття':['Платья','Сукні'],
+  'Джинсы':['Джинсы','Джинси'],'Джинси':['Джинсы','Джинси'],
+  'Блузки':['Блузки','Блузки'],'Брюки':['Брюки','Штани'],'Штани':['Брюки','Штани'],
+  'Куртки':['Куртки','Куртки'],'Юбки':['Юбки','Спідниці'],'Спідниці':['Юбки','Спідниці'],
+  'Футболки':['Футболки','Футболки'],'Свитера':['Свитера','Светри'],'Светри':['Свитера','Светри'],
+  'Аксессуары':['Аксессуары','Аксесуари'],'Аксесуари':['Аксессуары','Аксесуари']
+ }; const pair=map[String(c)];return pair?pair[lang==='ua'?1:0]:c;
+}
 function renderCats(){
  let extra=Array.isArray(settings.categories)?settings.categories:[];let cats=['Все',...new Set([...extra,...products.map(p=>p.category)].filter(Boolean))];
- $('cats').innerHTML=cats.map((c,i)=>`<button class="cat ${c===currentCategory?'active':''}" data-cat="${esc(c)}">${esc(c==='Все'?t('all'):c)}</button>`).join('');
+ $('cats').innerHTML=cats.map((c,i)=>`<button class="cat ${c===currentCategory?'active':''}" data-cat="${esc(c)}">${esc(c==='Все'?t('all'):translateCategory(c))}</button>`).join('');
  document.querySelectorAll('.cat').forEach(b=>b.onclick=()=>{currentCategory=b.dataset.cat;specialFilter='all';renderCats();renderSpecialFilters();render(currentCategory)})
 }
 function renderSpecialFilters(){
@@ -118,7 +131,7 @@ window.openProduct=(id,reopen=false)=>{
  const sizes=current.sizes||[],stock=current.sizeStock||{};$('sizes').innerHTML=sizes.map(s=>`<button class="size ${stock[s]===false?'disabled':''} ${selectedSize===s?'selected':''}" data-size="${esc(s)}" ${stock[s]===false?'disabled':''}>${esc(s)}</button>`).join('');
  document.querySelectorAll('.size').forEach(b=>b.onclick=()=>{document.querySelectorAll('.size').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedSize=b.dataset.size;$('sizeHint').textContent=t('selectedSize')+selectedSize+(selectedColor?' • '+selectedColor:'')});
  $('sizeHint').textContent=selectedSize?t('selectedSize')+selectedSize+(selectedColor?' • '+selectedColor:''):(selectedColor?t('selectedColor')+selectedColor:t('chooseSize'));
- if(!reopen)$('productModal').classList.remove('hidden');
+ if(!reopen){$('productModal').classList.remove('hidden');document.body.classList.add('modal-open')}
 }
 $('addToCart').onclick=()=>{
  if(!selectedSize){$('sizeHint').textContent=t('selectSize');return}
@@ -132,7 +145,7 @@ function updateCart(){
  $('cartItems').innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-line"><img src="${esc(x.image)}"><div><b>${esc(x.name)}</b><br><small>${esc(t('sizeLabel'))}${esc(x.size)}${x.color?' • '+esc(t('colorLabel'))+esc(x.color):''} • ${x.price?Number(x.price).toLocaleString('uk-UA')+' грн':esc(t('pricePending'))} × ${x.qty}</small></div><button class="remove" onclick="removeCart(${i})">${esc(t('remove'))}</button></div>`).join(''):`<p class="soft">${esc(t('emptyCart'))}</p>`;
  let total=cart.reduce((a,x)=>a+(Number(x.price)||0)*x.qty,0);$('cartTotal').textContent=total?total.toLocaleString('uk-UA')+' грн':t('pricePending');$('cartTotalCount').textContent=cart.length?'('+cart.reduce((a,x)=>a+x.qty,0)+')':'';$('checkoutBtn').disabled=!cart.length;
 }
-window.removeCart=i=>{cart.splice(i,1);saveLocal();updateCart()};$('cartBtn').onclick=()=>{$('cartModal').classList.remove('hidden')};$('checkoutBtn').onclick=()=>{if(!cart.length)return;closeAll();$('checkoutModal').classList.remove('hidden');$('orderStatus').textContent=''};
+window.removeCart=i=>{cart.splice(i,1);saveLocal();updateCart()};$('cartBtn').onclick=()=>{$('cartModal').classList.remove('hidden');document.body.classList.add('modal-open')};$('checkoutBtn').onclick=()=>{if(!cart.length)return;closeAll();$('checkoutModal').classList.remove('hidden');document.body.classList.add('modal-open');$('orderStatus').textContent=''};
 function bindCheckout(){
  document.querySelectorAll('input[name="delivery"]').forEach(r=>r.onchange=()=>toggleDelivery(r.value==='Новая Почта'&&r.checked));
  $('payment').onchange=togglePayment;$('city').addEventListener('input',debounce(loadBranches,350));$('checkoutForm').onsubmit=submitOrder;toggleDelivery(false);togglePayment()
@@ -143,8 +156,8 @@ function toggleDelivery(np){
  $('pickupNote').classList.toggle('hidden',np);togglePayment()
 }
 function togglePayment(){const card=$('payment').value==='Перевод на карту';$('cardBox').classList.toggle('hidden',!card);$('receiptBox').classList.toggle('hidden',!card);$('receipt').required=card;if(card)$('cardInfo').innerHTML=cardHtml()}
-async function loadCities(q){try{const d=await api('/api/novaposhta?mode=cities&q='+encodeURIComponent(q));const list=$('cityList');list.innerHTML=(d.cities||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent='Для живого списка городов и отделений добавьте API-ключ Новой Пошты в админке.';else $('npHint').textContent=t('npHint')}catch(e){}}
-async function loadBranches(){const city=$('city').value.trim();if(city.length<2)return;$('branch').value='';try{const d=await api('/api/novaposhta?mode=branches&q='+encodeURIComponent(city));$('branchList').innerHTML=(d.branches||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent='Для списка отделений нужен API-ключ Новой Пошты в админке.';else $('npHint').textContent=(d.branches||[]).length?(lang==='ua'?'Оберіть відділення зі списку.':'Выберите отделение из подсказок.'):(lang==='ua'?'Відділення не знайдені — уточніть місто.':'Отделения не найдены — уточните город.')}catch(e){}}
+async function loadCities(q){try{const d=await api('/api/novaposhta?mode=cities&q='+encodeURIComponent(q));const list=$('cityList');list.innerHTML=(d.cities||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent=lang==='ua'?'Для живого списку міст і відділень додайте API-ключ Нової Пошти в адмінці.':'Для живого списка городов и отделений добавьте API-ключ Новой Пошты в админке.';else $('npHint').textContent=t('npHint')}catch(e){}}
+async function loadBranches(){const city=$('city').value.trim();if(city.length<2)return;$('branch').value='';try{const d=await api('/api/novaposhta?mode=branches&q='+encodeURIComponent(city));$('branchList').innerHTML=(d.branches||[]).map(x=>`<option value="${esc(x.name)}">`).join('');if(d.needKey)$('npHint').textContent=lang==='ua'?'Для списку відділень потрібен API-ключ Нової Пошти в адмінці.':'Для списка отделений нужен API-ключ Новой Пошты в админке.';else $('npHint').textContent=(d.branches||[]).length?(lang==='ua'?'Оберіть відділення зі списку.':'Выберите отделение из подсказок.'):(lang==='ua'?'Відділення не знайдені — уточніть місто.':'Отделения не найдены — уточните город.')}catch(e){}}
 function debounce(fn,ms){let timer;return(...a)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...a),ms)}}
 async function submitOrder(e){
  e.preventDefault();let f=new FormData(e.target);let name=String(f.get('name')||'').trim().replace(/\s+/g,' '),phone=String(f.get('phone')||'').replace(/[\s()\-]/g,'');
@@ -153,7 +166,7 @@ async function submitOrder(e){
  let delivery=f.get('delivery');if(delivery==='Новая Почта'&&(!f.get('city')||!f.get('branch')))return showOrderError(lang==='ua'?'Оберіть місто та відділення Нової Пошти.':'Выберите город и отделение Новой Пошты.');
  let receipt='';if(f.get('payment')==='Перевод на карту'){const file=$('receipt').files?.[0];if(!file)return showOrderError(lang==='ua'?'Завантажте фото квитанції про оплату.':'Загрузите фото квитанции об оплате.');try{receipt=await compressReceipt(file)}catch(err){return showOrderError(err.message)}}
  let order={name,phone,delivery,city:delivery==='Новая Почта'?f.get('city'):'',branch:delivery==='Новая Почта'?f.get('branch'):'',payment:f.get('payment'),comment:f.get('comment'),receipt,items:cart.map(x=>({id:x.id,article:(products.find(p=>p.id===x.id)||{}).article||'',name:x.name,size:x.size,color:x.color||'',price:x.price,qty:x.qty,image:x.image}))};
- let d=await api('/api/order',{method:'POST',body:JSON.stringify(order)});if(d.ok){e.target.reset();$('npFields').classList.add('hidden');$('cardBox').classList.add('hidden');$('receiptBox').classList.add('hidden');$('pickupNote').classList.remove('hidden');cart=[];saveLocal();updateCart();closeAll();$('successOrder').textContent='Номер заказа: #'+d.id;$('successModal').classList.remove('hidden')}else showOrderError(d.error||'Не удалось оформить заказ.')}
+ let d=await api('/api/order',{method:'POST',body:JSON.stringify(order)});if(d.ok){e.target.reset();$('npFields').classList.add('hidden');$('cardBox').classList.add('hidden');$('receiptBox').classList.add('hidden');$('pickupNote').classList.remove('hidden');cart=[];saveLocal();updateCart();closeAll();$('successOrder').textContent=(lang==='ua'?'Номер замовлення: #':'Номер заказа: #')+d.id;$('successModal').classList.remove('hidden');document.body.classList.add('modal-open')}else showOrderError(d.error||'Не удалось оформить заказ.')}
 function showOrderError(msg){$('orderStatus').textContent=msg;$('orderStatus').className='error';$('orderStatus').classList.remove('hidden')}
 async function compressReceipt(file){if(!file.type.startsWith('image/'))throw new Error('Загрузите фото квитанции.');const img=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=()=>rej(new Error('Не удалось прочитать фото.'));x.src=URL.createObjectURL(file)});const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);let data=c.toDataURL('image/jpeg',.72);if(data.length>360000)data=c.toDataURL('image/jpeg',.55);if(data.length>480000)throw new Error('Фото квитанции слишком большое. Выберите другое фото.');return data}
-document.querySelector('[data-close-success]').onclick=()=>{$('successModal').classList.add('hidden')};function closeAll(){document.querySelectorAll('.modal').forEach(x=>x.classList.add('hidden'))}document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);document.querySelectorAll('.shade').forEach(x=>x.onclick=closeAll);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}init();
+document.querySelector('[data-close-success]').onclick=()=>{$('successModal').classList.add('hidden');document.body.classList.remove('modal-open')};function closeAll(){document.querySelectorAll('.modal').forEach(x=>x.classList.add('hidden'));document.body.classList.remove('modal-open')}document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);document.querySelectorAll('.shade').forEach(x=>x.onclick=closeAll);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}init();

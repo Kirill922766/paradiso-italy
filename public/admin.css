@@ -30,3 +30,10 @@
 
 .price-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.badges-box{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff7f7;border:1px solid #eadcdf;border-radius:10px;padding:10px 12px}.badges-box b{width:100%}.badges-box label{display:flex;align-items:center;gap:6px;font-size:13px}.badges-box input{width:auto}
 @media(max-width:700px){.price-fields{grid-template-columns:1fr}.badges-box{gap:10px}}
+
+.admin-lang-switch{display:flex;gap:3px;align-items:center;border:1px solid #eadfe0;background:#fff;border-radius:999px;padding:3px;margin:0 0 14px}
+.admin-lang-switch button{border:0;background:transparent;border-radius:999px;padding:7px 9px;font-weight:700;font-size:11px;color:#8f7b80;cursor:pointer}
+.admin-lang-switch button.active{background:#f4dce0;color:#302326}
+.admin-head-actions{display:flex;align-items:center;gap:10px}
+.admin-head-actions .admin-lang-switch{margin:0}
+@media(max-width:700px){.admin-head-actions{flex-wrap:wrap;justify-content:flex-end}.admin-head-actions .admin-lang-switch{order:3}}
