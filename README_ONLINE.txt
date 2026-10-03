@@ -4,10 +4,10 @@ PARADISO ITALY — ONLINE
 C:\Users\Admin\Documents\GitHub\paradiso-italy
 
 Онлайн:
-https://paradiso-italy.com
+https://paradiso-italy.kipillzatorskiy.workers.dev
 
 Админка:
-https://paradiso-italy.com/admin.html
+https://paradiso-italy.kipillzatorskiy.workers.dev/admin.html
 
 Что теперь можно делать в админке:
 - добавлять и удалять категории;

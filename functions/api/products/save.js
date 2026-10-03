@@ -28,7 +28,10 @@ export async function onRequestPost(context) {
   let data;
   try { data = await context.request.json(); } catch { return json({ error: 'Неверные данные' }, 400); }
   const products = Array.isArray(data?.products) ? data.products : [];
-  const statements = [context.env.DB.prepare('DELETE FROM products')];
+  const deletedIds = Array.isArray(data?.deletedIds)
+    ? data.deletedIds.map(Number).filter(Number.isFinite)
+    : [];
+  const statements = [];
   for (const p of products) {
     const sizes = normalizeSizes(p.sizes);
     const sizeStock = p.sizeStock && typeof p.sizeStock==='object' ? Object.fromEntries(sizes.map(s=>[s,p.sizeStock[s]!==false])) : Object.fromEntries(sizes.map(s=>[s,true]));
@@ -36,7 +39,23 @@ export async function onRequestPost(context) {
     const images = normalizeImages(p.images, p.image);
     const image = images[0] || String(p.image || '');
     statements.push(context.env.DB.prepare(
-      'INSERT INTO products (id, article, name, category, price, sizes_json, description, image, active, colors_json, images_json, size_stock_json, old_price, is_new, is_hit) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)'
+      `INSERT INTO products (id, article, name, category, price, sizes_json, description, image, active, colors_json, images_json, size_stock_json, old_price, is_new, is_hit)
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)
+       ON CONFLICT(id) DO UPDATE SET
+         article=excluded.article,
+         name=excluded.name,
+         category=excluded.category,
+         price=excluded.price,
+         sizes_json=excluded.sizes_json,
+         description=excluded.description,
+         image=excluded.image,
+         active=excluded.active,
+         colors_json=excluded.colors_json,
+         images_json=excluded.images_json,
+         size_stock_json=excluded.size_stock_json,
+         old_price=excluded.old_price,
+         is_new=excluded.is_new,
+         is_hit=excluded.is_hit`
     ).bind(
       Number(p.id), String(p.article || ''), String(p.name || ''), String(p.category || 'Одежда'),
       Number(p.price || 0), JSON.stringify(sizes), String(p.description || ''), image, p.active === false ? 0 : 1,
@@ -44,6 +63,9 @@ export async function onRequestPost(context) {
       Number(p.oldPrice || 0), p.isNew ? 1 : 0, p.isHit ? 1 : 0
     ));
   }
-  await context.env.DB.batch(statements);
-  return json({ ok: true });
+  for (const id of deletedIds) {
+    statements.push(context.env.DB.prepare('DELETE FROM products WHERE id = ?1').bind(id));
+  }
+  if (statements.length) await context.env.DB.batch(statements);
+  return json({ ok: true, saved: products.length, deleted: deletedIds.length });
 }

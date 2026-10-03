@@ -1,5 +1,4 @@
 import { onRequestGet as productsGet } from './functions/api/products.js';
-import { onRequestGet as novaPoshtaGet } from './functions/api/novaposhta.js';
 import { onRequestGet as settingsGet } from './functions/api/settings.js';
 import { onRequestGet as settingsAdminGet } from './functions/api/settings/admin.js';
 import { onRequestGet as ordersGet } from './functions/api/orders.js';
@@ -72,7 +71,6 @@ Sitemap: ${url.origin}/sitemap.xml
     try {
       switch (key) {
         case 'GET /api/products': return productsGet(ctx);
-        case 'GET /api/novaposhta': return novaPoshtaGet(ctx);
         case 'GET /api/settings': return settingsGet(ctx);
         case 'GET /api/settings/admin': return settingsAdminGet(ctx);
         case 'GET /api/orders': return ordersGet(ctx);

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin.html
 Disallow: /api/
 
-Sitemap: https://paradiso-italy.com/sitemap.xml
+Sitemap: https://paradiso-italy.kipillzatorskiy.workers.dev/sitemap.xml
