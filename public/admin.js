@@ -117,10 +117,10 @@ window.saveProduct=async i=>{
   const box=document.querySelector(`.product-edit[data-product-index="${i}"]`),p=products[i];
   syncProductDraft(i,box);
   p.images=p.images||[];p.image=p.images[0]||p.image||'';if(!p.category)p.category=categories()[0]||'Одежда';
-  await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});alert(adminLang==='ua'?'Товар збережено ♡':'Товар сохранён ♡');load();
+  await api('/api/products/save',{method:'POST',body:JSON.stringify({product:p})});alert(adminLang==='ua'?'Товар збережено ♡':'Товар сохранён ♡');load();
 };
-window.deleteProduct=async i=>{if(!confirm(adminLang==='ua'?'Видалити товар?':'Удалить товар?'))return;const id=Number(products[i]?.id);products.splice(i,1);try{await api('/api/products/save',{method:'POST',body:JSON.stringify({products,deletedIds:Number.isFinite(id)?[id]:[]})});renderProducts()}catch(e){alert(e.message);load()}};
-$('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:adminLang==='ua'?'Новий товар':'Новый товар',category:cat,price:0,oldPrice:0,isNew:true,isHit:false,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({products})});renderProducts()};
+window.deleteProduct=async i=>{if(!confirm(adminLang==='ua'?'Видалити товар?':'Удалить товар?'))return;const id=Number(products[i]?.id);products.splice(i,1);try{await api('/api/products/save',{method:'POST',body:JSON.stringify({deletedIds:Number.isFinite(id)?[id]:[]})});renderProducts()}catch(e){alert(e.message);load()}};
+$('addProduct').onclick=async()=>{const cat=categories()[0]||'Одежда';products.unshift({id:Date.now(),article:'',name:adminLang==='ua'?'Новий товар':'Новый товар',category:cat,price:0,oldPrice:0,isNew:true,isHit:false,sizes:[...DEFAULT_SIZES],sizeStock:{M:true,L:true,XL:true},colors:[],images:[],image:'',description:'',active:true});await api('/api/products/save',{method:'POST',body:JSON.stringify({product:products[0]})});renderProducts()};
 
 function initProductFilters(){
   const search=$('productSearch'), cat=$('productCategoryFilter');

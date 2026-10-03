@@ -1,0 +1,8 @@
+PARADISO Italy — SAFE CATALOG FIX
+
+1. This version never deletes the entire products table when saving a product.
+2. Admin saves one product at a time. A stale browser tab cannot overwrite other products.
+3. The API auto-repairs a catalog that consists only of blank “Новый товар” placeholders: first three rows become the original three products with their bundled photos; extra blank placeholders are hidden, not deleted, so order references remain safe.
+4. Known original articles get their bundled image restored if the database lost the image field.
+5. Bundled images are in public/images and are served by Cloudflare Assets.
+6. IMPORTANT: after replacing the GitHub repository files, wait for Cloudflare deployment to finish, then hard-refresh the site (Ctrl+F5 on PC or clear site data on phone).
